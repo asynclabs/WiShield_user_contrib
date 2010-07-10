@@ -52,7 +52,7 @@ static U8 rx_ready;
 static U8 cnf_pending;
 static U8* zg_buf;
 static U16 zg_buf_len;
-
+static U16 lastRssi;
 static U8 wpa_psk_key[32];
 
 void zg_init()
@@ -65,6 +65,7 @@ void zg_init()
 
 	intr_occured = 0;
 	intr_valid = 0;
+	lastRssi = 0;
 	zg_drv_state = DRV_STATE_INIT;
 	zg_conn_status = 0;
 	tx_ready = 0;
@@ -287,6 +288,7 @@ void zg_recv(U8* buf, U16* len)
 {
 	zg_rx_data_ind_t* ptr = (zg_rx_data_ind_t*)&(zg_buf[3]);
 	*len = ZGSTOHS( ptr->dataLen );
+	lastRssi = ZGSTOHS( ptr->rssi );
 
 	memcpy(&zg_buf[0], &zg_buf[5], 6);
 	memcpy(&zg_buf[6], &zg_buf[11], 6);
