@@ -46,8 +46,9 @@ extern "C" {
 #include "WProgram.h"
 #include "WiShield.h"
 
-void WiShield::init()
+boolean WiShield::init(U8 seconds)
 {
+	boolean retVal = false;
 	zg_init();
 
 #ifdef USE_DIG0_INTR
@@ -61,11 +62,21 @@ void WiShield::init()
 	PCMSK0 |= (1<<PCINT0);
 #endif
 
-	while(zg_get_conn_state() != 1) {
-		zg_drv_process();
+    // TODO: potential for rollover bug after ~58 days...
+	unsigned long time = millis();
+	while(time + (seconds * 1000) > millis()) {
+		if(1 != zg_get_conn_state()) {
+			zg_drv_process();
+		}
+		else {
+			retVal = true;
+			break;
+		}
 	}
-
+	
 	stack_init();
+	
+	return retVal;
 }
 
 void WiShield::run()

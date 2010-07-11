@@ -35,12 +35,25 @@
 #ifndef __APPS_CONF_H__
 #define __APPS_CONF_H__
 
+// ----------------------------------------------------------------------------
+// -- Begin uIP/WiShield stack configuration settings
+
 //Here we include the header file for the application(s) we use in our project.
 #define APP_WEBSERVER
 //#define APP_WEBCLIENT
 //#define APP_SOCKAPP
 //#define APP_UDPAPP
 //#define APP_WISERVER
+
+#define MAX_TCP_CONNS       1 // Max TCP connections desired
+#define MAX_TCP_LISTENPORTS 1 // Max TCP listening ports
+#define MAX_UDP_CONNS       1 // Max UDP connections desired
+// Don't play with UIP_CLOCK_DIV unless you know what you are doing!
+#define UIP_CLOCK_DIV       2 // Referenced in stack.c; default 2
+
+// -- End uIP/WiShield stack configuration settings
+// ----------------------------------------------------------------------------
+
 
 #ifdef APP_WEBSERVER
 #include "webserver.h"
@@ -56,6 +69,9 @@
 
 #ifdef APP_UDPAPP
 #include "udpapp.h"
+#define UIP_UDP_ENABLED 1
+#else
+#define UIP_UDP_ENABLED 0
 #endif
 
 #ifdef APP_WISERVER

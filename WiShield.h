@@ -44,7 +44,8 @@ extern "C" {
 
 class WiShield {
 	public:
-		void init();
+		boolean init() {return init(60);}
+		boolean init(U8 seconds);
 		void run();
 };
 

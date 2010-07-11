@@ -37,9 +37,11 @@
 
 #include "pt.h"
 
+#if !defined(APP_SOCKAPP) && !defined(APP_WISERVER)
 typedef struct socket_app_state {
   char name;
 } uip_tcp_appstate_t;
+#endif // !defined(APP_SOCKAPP) && !defined(APP_WISERVER)
 
 void dummy_app_appcall(void);
 #ifndef UIP_APPCALL

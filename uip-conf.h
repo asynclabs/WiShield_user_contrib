@@ -38,7 +38,6 @@
 #include <inttypes.h>
 #include <avr/io.h>
 #include <stdio.h>
-//#include <stdbool.h>
 
 /**
  * 8 bit datatype
@@ -68,19 +67,22 @@ typedef uint16_t u16_t;
  */
 typedef unsigned short uip_stats_t;
 
+//Include app configuration
+#include "apps-conf.h"
+
 /**
  * Maximum number of TCP connections.
  *
  * \hideinitializer
  */
-#define UIP_CONF_MAX_CONNECTIONS 1
+#define UIP_CONF_MAX_CONNECTIONS MAX_TCP_CONNS
 
 /**
  * Maximum number of listening TCP ports.
  *
  * \hideinitializer
  */
-#define UIP_CONF_MAX_LISTENPORTS 1
+#define UIP_CONF_MAX_LISTENPORTS MAX_TCP_LISTENPORTS
 
 /**
  * uIP buffer size.
@@ -107,14 +109,14 @@ typedef unsigned short uip_stats_t;
  *
  * \hideinitializer
  */
-#define UIP_CONF_UDP             0
+#define UIP_CONF_UDP             UIP_UDP_ENABLED
 
 /**
  * UDP checksums on or off
  *
  * \hideinitializer
  */
-#define UIP_CONF_UDP_CHECKSUMS   0
+#define UIP_CONF_UDP_CHECKSUMS   UIP_UDP_ENABLED
 
 /**
  * uIP statistics on or off
@@ -128,17 +130,14 @@ typedef unsigned short uip_stats_t;
  *
  * \hideinitializer
  */
-#define UIP_CONF_BROADCAST		0
+#define UIP_CONF_BROADCAST		 UIP_UDP_ENABLED
 
 /**
  * The maximum amount of concurrent UDP connections.
  *
  * \hideinitializer
  */
-#define UIP_CONF_UDP_CONNS		1
-
-//Include app configuration
-#include "apps-conf.h"
+#define UIP_CONF_UDP_CONNS		 MAX_UDP_CONNS
 
 #endif /* __UIP_CONF_H__ */
 
