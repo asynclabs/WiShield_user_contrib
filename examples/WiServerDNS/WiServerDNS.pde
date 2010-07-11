@@ -3,13 +3,13 @@
  * it via the Serial API
  */
  
-// Requires both APP_WISERVER and APP_UDPAPP to be defined in apps-conf.h
+// Requires APP_WISERVER, APP_UDPAPP and UIP_DNS to be defined in apps-conf.h
 //  APP_WISERVER - for the WiServer components of the sketch
-//  APP_UDPAPP   - for the DNS components of the sketch
+//  APP_UDPAPP   - for the UDP/DNS components of the sketch
+//  UIP_DNS      - for the DNS components of the sketch
 
 #include <WiServer.h>
 extern "C" {
-  #include "g2100.h"
   #include "uip.h"
 }
 
@@ -39,6 +39,8 @@ unsigned char wireless_mode = WIRELESS_MODE_INFRA;
 unsigned char ssid_len;
 unsigned char security_passphrase_len;
 // End of wireless configuration parameters ----------------------------------------
+
+
 
 // Flag to know when the DNS query has completed
 boolean dnsCalledBack = false;
