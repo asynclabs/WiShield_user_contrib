@@ -39,12 +39,13 @@
 // -- Begin uIP/WiShield stack configuration settings
 
 //Here we include the header file for the application(s) we use in our project.
-#define APP_WEBSERVER
+//#define APP_WEBSERVER
 //#define APP_WEBCLIENT
-//#define APP_SOCKAPP
-//#define APP_UDPAPP
+#define APP_SOCKAPP
+#define APP_UDPAPP
 //#define APP_WISERVER
 
+#define UIP_DNS               //APP_UDPAPP must be defined!
 #define MAX_TCP_CONNS       1 // Max TCP connections desired
 #define MAX_TCP_LISTENPORTS 1 // Max TCP listening ports
 #define MAX_UDP_CONNS       1 // Max UDP connections desired
@@ -76,6 +77,10 @@
 
 #ifdef APP_WISERVER
 #include "server.h"
+#endif
+
+#ifdef UIP_DNS
+#include "uip_dns.h"
 #endif
 
 #endif /*__APPS_CONF_H__*/
