@@ -235,17 +235,23 @@ void zg_process_isr()
 			break;
 		case ZG_INTR_ST_RD_CTRL_REG:
 		{
-			U16 rx_byte_cnt = (0x0000 | (hdr[1] << 8) | hdr[2]) & 0x0fff;
-
-			zg_buf[0] = ZG_CMD_RD_FIFO;
-			spi_transfer(zg_buf, rx_byte_cnt + 1, 1);
-
-			hdr[0] = ZG_CMD_RD_FIFO_DONE;
-			spi_transfer(hdr, 1, 1);
-
-			intr_valid = 1;
-
-			intr_state = 0;
+			U16 rx_byte_cnt = (0x0000 | (hdr[1] << 8) | hdr[2]) & 0x0fff; // only 12bits matter (0-4095)
+			// Make sure zg_buf/uip_buf is large enough for the incoming data
+			if(rx_byte_cnt < (U16)UIP_BUFSIZE) {
+				// Incoming data fits
+				zg_buf[0] = ZG_CMD_RD_FIFO;
+				spi_transfer(zg_buf, rx_byte_cnt + 1, 1); // copy ZG2100 buffer contents into zg_buf (uip_buf)
+				hdr[0] = ZG_CMD_RD_FIFO_DONE; // Tell ZG2100 we're done reading from it's buffer
+				spi_transfer(hdr, 1, 1);
+				intr_valid = 1;
+				intr_state = 0;
+            }
+            else { 
+            	// Incoming data too large, ignore and continue
+				intr_valid = 0;
+				intr_state = 0;
+			}
+			
 			break;
 		}
 		}
