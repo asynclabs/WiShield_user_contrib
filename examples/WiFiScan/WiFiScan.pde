@@ -1,4 +1,7 @@
-//AsyncLabs WiShield WiFi Scanning Sample
+// ----------------------------------------------------------------------------
+// -- AsyncLabs WiShield WiFi Scanning Sample
+// ----------------------------------------------------------------------------
+
 
 // Requires APP_SOCKAPP, APP_UDPAPP, UIP_DNS, UIP_DHCP and UIP_SCAN to be defined in apps-conf.h
 //  APP_SOCKAPP - for the TCP sockets components of the sketch
@@ -6,6 +9,58 @@
 //  UIP_DNS     - for the DNS components of the sketch
 //  UIP_DHCP    - for the DHCP components of the sketch
 //  UIP_SCAN    - for the Access Point scanning components of the sketch
+
+
+// ----------------------------------------------------------------------------
+// -- WiFiScan state of affairs notes
+// -- 
+// -- The stack and this app are currently tweaky; things seem to work every other
+// --  time.  Needs investigation - DHCP and DNS together? TODO
+// --
+// -- WiFiScan is a conglomeration of APP_TYPES and UIP features; it is both a 
+// --  TCP/socket app and a UPD app (at the same time). It utilizes the new
+// --  UIP_DNS, UIP_DHCP and UIP_SCAN features to do some fun stuff.
+// -- 
+// -- WiFiScan's purpose in life is to do the following...
+// --  1. Use UIP_SCAN to scan for access points
+// --  2. Parses returned scan data for OPEN APs and returns the OPEN AP with
+// --     the strongest RSSI.
+// --  3. If suitable OPEN AP is returned connect with it
+// --  4. If connection is made use UIP_DHCP to get DHCP addr info from gateway.
+// --     I am not happy with this as I am unable to make the sketch work without
+// --     a software reset of the WiShield.  Removing the reset needs to be done 
+// --     to make DHCP viable.
+// --  5. Set the returned DHCP data into memory and reset the WiShield (not Arduino) :( 
+// --  6. Reconnect to the OPEN AP using DHCP data then use UIP_DNS to lookup the 
+// --     IP address of my server.
+// --  7. Phone home to my server with TCP data describing the open AP.
+// --     I want to add GPS shield to enable sending lat/lon in the packet
+// --  8. Disconnect
+// --  9. GOTO 1
+// -- 
+// -- So its an OPEN AP sniffer that uses the OPEN APs that it finds to send a 
+// --  descriptive packet home - the goal being to to provide 'real time' 
+// --  location reporting from an Arduino/WiShield/GPS that just sits there 
+// --  and does its job unnoticed. I have not looked recently but I believe
+// --  Skyhook could be used to geographically locate the open APs as well.
+// --
+// -- The code is a bloody mess - but it works in a 'labratory setting'.  I
+// --  want to work out the extra reset during DHCP acquisition and then 
+// --  I'll refactor the code.  Its still an experiment!
+// --
+// -- If you are going to play with this contact me for a user ID and you can 
+// --  post to my server.  I have plans for presenting the data via web interface.
+// --
+// -- This app is an example of using a TCP app (APP_SOCKAPP) and UDP app (APP_UDPAPP) 
+// --  together at the same time. UIP_DNS and UIP_DHCP need the UDP support and 
+// --  the phoning home is done with a TCP packet. Most of the work getting this
+// --  ready to submit was working out how to get all of the APP_TYPES to build
+// --  succesfully with APP_UDPAPP which is required for DHCP/DNS.
+// -- 
+// -- And credit to spidermonkey04 who discovered the sought after UIP_SCAN
+// --  functionality which made this all possible. Thanks!
+// --
+// ----------------------------------------------------------------------------
 
 
 //#include <dataflash.h>
@@ -37,7 +92,7 @@ U8 bestIndex = 0;
 //unsigned int prevRssi = 0;
 U8 tcpRetry;
 U8 udpRetry;
-U8 userID = 20;
+U8 userID = 30;
 unsigned int cleanupCount;
 unsigned long time;
 uip_ipaddr_t srvaddr;
@@ -46,8 +101,11 @@ tZGBssDesc *bssDesc;
 char formatBuf[96];
 
 
-//-----------------------------------Wireless Stuff----------------------------------//
-
+// ----------------------------------------------------------------------------
+// -- Standard WiShield WiFi configuration
+// -- All values are just a guess as DHCP and DNS will set all of them (hopefully!)
+// -- Network addrs are defaulted to something that should work with an open/unconfigured
+// -- Linksys AP in case the DHCP and/or DNS queries fail.
 U8 local_ip[]    = {192,168,1,33};    //---IP address of WiShield
 U8 gateway_ip[]  = {192,168,1,1};     //---Gateway IP address(other device if Ad-hoc)
 U8 subnet_mask[] = {255,255,255,255}; //---Subnet mask
@@ -58,8 +116,8 @@ U8 wireless_mode = 1;                 //---1==Infrastructure, 2==Ad-hoc
 const prog_char security_passphrase[] PROGMEM = {""};
 prog_uchar wep_keys[] = {};
 U8 security_passphrase_len, ssid_len;
+// ----------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------//
 
 void setup()
 {
@@ -94,8 +152,8 @@ void loop()
 {
   if(PHASEINIT == phase) {
      Serial.println("PHASEINIT");
-     pinMode(WIFI_SLAVE_SELECT,OUTPUT);
-     digitalWrite(WIFI_SLAVE_SELECT,HIGH);
+     pinMode(WIFI_SLAVE_SELECT, OUTPUT);
+     digitalWrite(WIFI_SLAVE_SELECT, HIGH);
      zg_init();
      attachInterrupt(0, zg_isr, LOW);
      time = millis();
@@ -236,7 +294,7 @@ extern "C" {
    void udpapp_init(void)
    {
    }
-
+   
    void udpapp_appcall(void)
    {
       if(PHASEDHCP == phase) {
@@ -416,7 +474,6 @@ extern "C" {
       phase = PHASERECONNECT;
    }
 
-
    void uip_dns_callback(char *name, u16_t *ipaddr)
    {   
       if(NULL != ipaddr) {
@@ -448,5 +505,4 @@ extern "C" {
       Serial.println(data);
    }
    */
-  
 }

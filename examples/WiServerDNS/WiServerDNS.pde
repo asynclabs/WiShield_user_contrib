@@ -17,7 +17,6 @@ extern "C" {
 unsigned char local_ip[]    = {192,168,1,2};   // IP address of WiShield
 unsigned char gateway_ip[]  = {192,168,1,1};   // router or gateway IP address
 unsigned char subnet_mask[] = {255,255,255,0}; // subnet mask for the local network
-u16_t dns_ip[]              = {192,168,1,1};   // address of the DNS server (try using gateway_ip for starters)
 char ssid[]                 = {"ASYNCLABS"};   // max 32 bytes
 unsigned char security_type = 0;               // 0 - open; 1 - WEP; 2 - WPA; 3 - WPA2
 
@@ -53,17 +52,19 @@ void printData(char* data, int len) {
   // includes the HTTP header. 
   while (len-- > 0) {
     Serial.print(*(data++));
-  } 
+  }
 }
 
 
 // Hardcoded IP Address for www.weather.gov
 // If DNS lookup is succesful this address will be set in uip_dns_callback
 // Otherwise use hardcoded working value...
-uint8 ip[] = {140,90,113,200};
+// uint8 ip[] = {140,90,113,200};
+uint8 ip[] = {71,231,196,153};
 
 // A request that gets the latest METAR weather data for LAX
-GETrequest getWeather(ip, 80, "www.weather.gov", "/data/METAR/KLAX.1.txt");
+// GETrequest getWeather(ip, 80, "www.weather.gov", "/data/METAR/KLAX.1.txt");
+GETrequest getWeather(ip, 80, "slacklab.org", "/WiShield.html");
 
 
 void setup() {
@@ -83,7 +84,8 @@ void setup() {
 
   // Start the DNS query
   uip_dns_conf(dns_ip);
-  uip_dns_query("www.weather.gov");
+  //uip_dns_query("www.weather.gov");
+  uip_dns_query("slacklab.org");
 }
 
 // Time (in millis) when the data should be retrieved 
