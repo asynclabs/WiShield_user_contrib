@@ -38,20 +38,32 @@
 // ----------------------------------------------------------------------------
 // -- Begin uIP/WiShield stack configuration settings
 
-//Here we include the header file for the application(s) we use in our project.
+//
+// Application type defines; uncomment to enable APP_TYPES
+//   APP_UDPAPP is used for UDP only apps as well as DNS and DHCP apps; if your app will use
+//   DNS and/or DHCP then your APP_TYPE (e.g. APP_WISERVER) AND APP_UDPAPP must be defined (uncommented).
+//
 //#define APP_WEBSERVER
 //#define APP_WEBCLIENT
 //#define APP_SOCKAPP
 //#define APP_UDPAPP
 #define APP_WISERVER
 
-//#define UIP_DNS               //Add DNS capabilities - APP_UDPAPP must be defined!
-//#define UIP_SCAN              //Add Access Point scan capabilities
-#define MAX_TCP_CONNS       1 // Max TCP connections desired
-#define MAX_TCP_LISTENPORTS 1 // Max TCP listening ports
-#define MAX_UDP_CONNS       1 // Max UDP connections desired
+//
+// Add on features; uncomment to enable additional functionality
+//
+//#define UIP_DNS                //Add DNS capabilities - APP_UDPAPP must be defined!
+//#define UIP_DHCP               //Add DHCP capabilities - APP_UDPAPP must be defined!
+//#define UIP_SCAN               //Add Access Point scan capabilities
+
+//
+// Commonly accessed uIP stack settings 
+//
+#define MAX_TCP_CONNS       1  // Max TCP connections desired
+#define MAX_TCP_LISTENPORTS 1  // Max TCP listening ports
+#define MAX_UDP_CONNS       1  // Max UDP connections desired
 // Don't play with UIP_CLOCK_DIV unless you know what you are doing!
-#define UIP_CLOCK_DIV       2 // Referenced in stack.c; default 2
+#define UIP_CLOCK_DIV       2  // Referenced in stack.c; default 2
 
 // -- End uIP/WiShield stack configuration settings
 // ----------------------------------------------------------------------------
@@ -78,6 +90,10 @@
 
 #ifdef APP_WISERVER
 #include "server.h"
+#endif
+
+#ifdef UIP_DHCP
+#include "uip_dhcp.h"
 #endif
 
 #ifdef UIP_DNS

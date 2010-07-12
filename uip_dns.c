@@ -63,11 +63,10 @@
 #include "uip.h"
  
 #ifdef UIP_DNS
-#include "uip_dns.h"
 
-#ifndef NULL
-#define NULL (void *)0
-#endif /* NULL */
+//#ifndef NULL
+//#define NULL (void *)0
+//#endif /* NULL */
 
 /** \internal The maximum number of retries when asking for a name. */
 #define MAX_RETRIES 8

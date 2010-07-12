@@ -89,6 +89,10 @@ void stack_init(void)
 	socket_app_init();
 #endif
 
+#ifdef UIP_DHCP
+	uip_dhcp_init(zg_get_mac(), 6);
+#endif
+
 #ifdef UIP_DNS
 	uip_dns_init();
 #endif
