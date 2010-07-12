@@ -195,7 +195,11 @@ enum {
 #define ZG_INTR2_MASK_ALL		(0xffff)
 
 // Buffer size
+#ifdef UIP_SCAN
+#define ZG_BUFFER_SIZE		800
+#else
 #define ZG_BUFFER_SIZE		450
+#endif // UIP_SCAN
 
 // Types of networks
 #define ZG_BSS_INFRA		(1)    // infrastructure only
@@ -280,6 +284,81 @@ typedef struct
 
 #define ZG_CONNECT_REQ_SIZE			(38)
 
+// =================================================================================================
+#ifdef UIP_SCAN
+
+/* completely describes the details of a BSS (access point) */
+/* This structure is used as a single entry in a Scan result */
+typedef struct
+{
+    u8        bssid[6]; /* network BSSID value */
+    u8        ssid[32];   /* network SSID value */
+    u8        capInfo[2];            /* capability info bits */
+    u16       beaconPeriod;          /* network Beacon interval */
+    u16       atimWindow; /* only valid if .bssType == Ibss */
+    u8        basicRateSet[8]; /* list of network basic rates */
+    u8        rssi;            /* signal strength of rx'd
+                                  * frame beacon, probe resp */
+    u8        numRates;        /* num entries in basicRateSet */
+    u8        DtimPeriod;      /* (part of TIM element) */
+    u8        bssType;           /* ad-hoc or infrastructure. */
+    u8        channel;        /* phy param set */
+    u8        ssidLen;       /* number of bytes in ssid */
+} tZGBssDesc; /* 58 bytes */
+
+typedef tZGBssDesc *tZGBssDescPtr;
+
+/* use #define size to represent the number of bytes in the structure
+ * because not all compilers have an appropriate calculation when using sizeof() */
+#define kZGBssDescSZ (58)
+
+/* Represents the input parameters required to
+ * conduct a Scan operation */
+typedef struct
+{
+    u16         probeDelay;           /* the number of usec to delay before transmitting a probe
+                                          * request following the channel change event */
+    u16         minChannelTime;       /* the minimum time to spend on each channel in units
+                                          * of TU (1024 usec) */
+    u16         maxChannelTime;       /* the maximum time to spend on each channel in units
+                                          * of TU (1024 usec) */
+    u8          bssid[6];             /* limits the scan to a specific Bss or Broadcast
+                                          * (FF:FF:FF:FF:FF:FF) */
+    u8          bss;                  /* limits the type of networks to include in scan results.
+                                          * Can be one of; kBssInfra kBssAdHoc kBssAny*/
+    u8          snType;               /* one of kZGMACSnTypeActive or kZGMACSnTypePassive where
+                                          * active indicates the use of Probe Request frames */
+    u8          ssidLen;              /* num chars in ssid */
+    u8          chnlLen;              /* num channels to scan */
+    u8          ssid[32];  /* limits the scan to a specific Service Set (SSID) or
+                                         // * broadcast ("\0") */
+    u8          channelList[14]; /* zero terminated list of channels
+                                                   * to scan */
+} tZGScanReq; /* 62 bytes */
+
+typedef tZGScanReq *tZGScanReqPtr;
+
+/* use #define size to represent the number of bytes in the structure
+ * because not all compilers have an appropriate calculation when using sizeof() */
+#define kZGScanReqSZ    (62)
+
+/* The structure used to return the scan results back to the host system */
+typedef struct
+{
+    u8    result;        /* the result of the scan */
+    u8    macState;      /* current state of the on-chip MAC */
+    u8    lastChnl;      /* the last channel scanned */
+    u8    numBssDesc;    /* The number of tZGMACBssDesc objects that
+                             * immediately follows this structure in memory */
+} tZGScanResult; /* 4 bytes */
+
+typedef tZGScanResult *tZGScanResultPtr;
+
+#define kZGScanResultSZ    (4)
+
+#endif // UIP_SCAN
+// =================================================================================================
+
 void zg_init();
 void zg_reset();
 void spi_transfer(volatile U8* buf, U16 len, U8 toggle_cs);
@@ -302,5 +381,12 @@ void zg_drv_process();
 
 // User Contributed ================================================================================ 
 U16 zg_get_rssi();
+
+#ifdef UIP_SCAN
+void zg_scan_start();
+tZGScanResult* zg_scan_results();
+tZGBssDesc* zg_scan_desc(U8 item);
+U16 get_scan_cnt();
+#endif // UIP_SCAN
 
 #endif /* G2100_H_ */

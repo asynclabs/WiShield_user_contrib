@@ -36,9 +36,9 @@
 #include <string.h>
 #include "witypes.h"
 #include "config.h"
+#include "global-conf.h"
 #include "g2100.h"
 #include "spi.h"
-#include "global-conf.h"
 
 static U8 mac[6];
 static U8 zg_conn_status;
@@ -53,6 +53,7 @@ static U8 cnf_pending;
 static U8* zg_buf;
 static U16 zg_buf_len;
 static U16 lastRssi;
+static U8 scan_cnt;
 static U8 wpa_psk_key[32];
 
 void zg_init()
@@ -384,6 +385,83 @@ static void zg_write_psk_key(U8* cmd_buf)
 	return;
 }
 
+U16 zg_get_rssi(){
+     return lastRssi;
+}
+
+// =================================================================================================
+#ifdef UIP_SCAN
+
+tZGScanResult* zg_scan_results(void)
+{
+    return &uip_buf[3];   
+}
+
+tZGBssDesc* zg_scan_desc(U8 item)
+{
+	return &uip_buf[7 + (item * sizeof(tZGBssDesc))];
+}
+
+U16 get_scan_cnt(){
+     return scan_cnt;
+}
+
+void zg_scan_start()
+{
+	scan_cnt = 0;
+    tZGScanReq* ptr = (tZGScanReq*)&zg_buf[3];
+     
+    zg_buf[0] = ZG_CMD_WT_FIFO_MGMT;
+    zg_buf[1] = ZG_MAC_TYPE_MGMT_REQ;
+    zg_buf[2] = ZG_MAC_SUBTYPE_MGMT_SCAN;
+    
+    // Number of usec to delay before transmitting a probe
+    // request following the channel change event
+    ptr->probeDelay = ( U16 ) HSTOZGS( ( U16 ) 20);
+    // the minimum time to spend on each channel in units
+    // of TU (1024 usec)
+    ptr->minChannelTime = ( U16 ) HSTOZGS(( U16 ) 400);
+    // Maximum time to spend on each channel in units
+    // of TU (1024 usec)
+    ptr->maxChannelTime = ( U16 ) HSTOZGS( ( U16 ) 800);
+    // Bssid to restrict the scan too. Or ff:ff:ff:ff:ff:ff
+    // to not restrict the scan by bssid
+    ptr->bssid[0] = 0xFF;
+    ptr->bssid[1] = 0xFF;
+    ptr->bssid[2] = 0xFF;
+    ptr->bssid[3] = 0xFF;
+    ptr->bssid[4] = 0xFF;
+    ptr->bssid[5] = 0xFF;
+    // Type of networks to be scanned. 1==Infrastructure, 2==Ad-hoc, 3==Any
+    ptr->bss = 3;
+    // Scan Type. 1==Active (probe requests), 2==Passive (just listens)
+    ptr->snType = 1;
+    // set ssid length to 0 to do discovery scan
+    ptr->ssidLen = 0;
+    // State based scan only scans a single channel at a time
+    ptr->chnlLen = 11;
+    // Zero-terminated list of channels to scan
+    //ptr->channelList[0] = 3;
+    //ptr->channelList[1] = 6;
+    //ptr->channelList[2] = 11;
+    //ptr->channelList[3] = 0;
+    U8 b;
+    for ( b=0; b<11; b++ ){
+        ptr->channelList[b] = b+1;
+    }
+    ptr->channelList[13] = 0;
+    // Actually send command to zg2100 over SPI
+    spi_transfer( zg_buf, 65, 1 );
+    
+    zg_buf[0] = ZG_CMD_WT_FIFO_DONE;
+    spi_transfer(zg_buf, 1, 1);
+    
+    //zg_drv_state = DRV_STATE_IDLE;
+}
+
+#endif // UIP_SCAN
+// =================================================================================================
+
 void zg_drv_process()
 {
 	// TX frame
@@ -406,6 +484,9 @@ void zg_drv_process()
 		case ZG_MAC_TYPE_MGMT_CONFIRM:
 			if (zg_buf[3] == ZG_RESULT_SUCCESS) {
 				switch (zg_buf[2]) {
+                case ZG_MAC_SUBTYPE_MGMT_SCAN:
+                    scan_cnt = 1;
+                    break;
 				case ZG_MAC_SUBTYPE_MGMT_REQ_GET_PARAM:
 					mac[0] = zg_buf[7];
 					mac[1] = zg_buf[8];

@@ -41,11 +41,12 @@
 //Here we include the header file for the application(s) we use in our project.
 //#define APP_WEBSERVER
 //#define APP_WEBCLIENT
-#define APP_SOCKAPP
-#define APP_UDPAPP
-//#define APP_WISERVER
+//#define APP_SOCKAPP
+//#define APP_UDPAPP
+#define APP_WISERVER
 
-#define UIP_DNS               //APP_UDPAPP must be defined!
+//#define UIP_DNS               //Add DNS capabilities - APP_UDPAPP must be defined!
+//#define UIP_SCAN              //Add Access Point scan capabilities
 #define MAX_TCP_CONNS       1 // Max TCP connections desired
 #define MAX_TCP_LISTENPORTS 1 // Max TCP listening ports
 #define MAX_UDP_CONNS       1 // Max UDP connections desired
