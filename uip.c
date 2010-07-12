@@ -403,11 +403,17 @@ uip_udpchksum(void)
 void
 uip_init(void)
 {
+  uip_flags = 0;
+  uip_len = 0;
+  lastport = 4096;
+      
   for(c = 0; c < UIP_LISTENPORTS; ++c) {
     uip_listenports[c] = 0;
   }
   for(c = 0; c < UIP_CONNS; ++c) {
     uip_conns[c].tcpstateflags = UIP_CLOSED;
+    uip_conns[c].lport = 0;
+    uip_conns[c].rport = 0;
   }
 #if UIP_ACTIVE_OPEN
   lastport = 1024;
