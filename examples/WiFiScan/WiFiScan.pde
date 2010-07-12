@@ -15,8 +15,11 @@
 // -- WiFiScan state of affairs notes
 // -- 
 // -- The stack and this app are currently tweaky; things seem to work every other
-// --  time.  Needs investigation - DHCP and DNS together? TODO
-// --
+// --  time. Using SimpleClient I found the stack tweak to be present in the latest
+// --  WiShield master (1.3.0). Try configuring SimpleClient 1.3.0 and running it over
+// --  and over and just play with it. I am unsure if DHCP and DNS work together but 
+// --  they do work separately.
+// --  
 // -- WiFiScan is a conglomeration of APP_TYPES and UIP features; it is both a 
 // --  TCP/socket app and a UPD app (at the same time). It utilizes the new
 // --  UIP_DNS, UIP_DHCP and UIP_SCAN features to do some fun stuff.
@@ -101,22 +104,30 @@ tZGBssDesc *bssDesc;
 char formatBuf[96];
 
 
-// ----------------------------------------------------------------------------
-// -- Standard WiShield WiFi configuration
-// -- All values are just a guess as DHCP and DNS will set all of them (hopefully!)
-// -- Network addrs are defaulted to something that should work with an open/unconfigured
-// -- Linksys AP in case the DHCP and/or DNS queries fail.
-U8 local_ip[]    = {192,168,1,33};    //---IP address of WiShield
-U8 gateway_ip[]  = {192,168,1,1};     //---Gateway IP address(other device if Ad-hoc)
-U8 subnet_mask[] = {255,255,255,255}; //---Subnet mask
-u16_t dns_ip[]   = {0,0,0,0};         //---DNS server addr
-char ssid[32];                        //---SSID, Max 32 bytes
-U8 security_type = 0;                 //---0==open, 1==WEP, 2==WPA, 3==WPA2
-U8 wireless_mode = 1;                 //---1==Infrastructure, 2==Ad-hoc
-const prog_char security_passphrase[] PROGMEM = {""};
-prog_uchar wep_keys[] = {};
-U8 security_passphrase_len, ssid_len;
-// ----------------------------------------------------------------------------
+// Wireless configuration parameters ----------------------------------------
+//  All values are just a guess as DHCP and DNS will set all of them (hopefully)
+//  Network addrs are defaulted to something that should work with an open/unconfigured
+//  Linksys AP in case the DHCP and/or DNS queries fail.
+unsigned char local_ip[]    = {192,168,1,33};  // IP address of WiShield
+unsigned char gateway_ip[]  = {192,168,1,1};   // router or gateway IP address
+unsigned char subnet_mask[] = {255,255,255,0}; // subnet mask for the local network
+u16_t dns_ip[]              = {0,0,0,0};       // DNS server addr
+char ssid[32];                                 // SSID, Max 32 bytes
+U8 security_type            = 0;               // 0==open, 1==WEP, 2==WPA, 3==WPA2
+U8 wireless_mode            = 1;               // 1==Infrastructure, 2==Ad-hoc
+unsigned char ssid_len;
+unsigned char security_passphrase_len;
+
+// WPA/WPA2 passphrase
+const prog_char security_passphrase[] PROGMEM = {"12345678"};	// max 64 characters
+
+// WEP 128-bit keys
+prog_uchar wep_keys[] PROGMEM = { 
+   0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d,  // Key 0
+   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // Key 1
+   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // Key 2
+   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // Key 3
+// End of wireless configuration parameters ----------------------------------------
 
 
 void setup()
