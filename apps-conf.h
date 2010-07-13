@@ -59,9 +59,9 @@
 //
 // Commonly accessed uIP stack settings 
 //
-#define MAX_TCP_CONNS       1  // Max TCP connections desired
-#define MAX_TCP_LISTENPORTS 1  // Max TCP listening ports
-#define MAX_UDP_CONNS       1  // Max UDP connections desired
+#define MAX_TCP_CONNS       2  // Max TCP connections desired
+#define MAX_TCP_LISTENPORTS 2  // Max TCP listening ports
+#define MAX_UDP_CONNS       2  // Max UDP connections desired
 // Don't play with UIP_CLOCK_DIV unless you know what you are doing!
 #define UIP_CLOCK_DIV       2  // Referenced in stack.c; default 2
 

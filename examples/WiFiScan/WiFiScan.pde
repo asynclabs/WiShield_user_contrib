@@ -14,12 +14,6 @@
 // ----------------------------------------------------------------------------
 // -- WiFiScan state of affairs notes
 // -- 
-// -- The stack and this app are currently tweaky; things seem to work every other
-// --  time. Using SimpleClient I found the stack tweak to be present in the latest
-// --  WiShield master (1.3.0). Try configuring SimpleClient 1.3.0 and running it over
-// --  and over and just play with it. I am unsure if DHCP and DNS work together but 
-// --  they do work separately.
-// --  
 // -- WiFiScan is a conglomeration of APP_TYPES and UIP features; it is both a 
 // --  TCP/socket app and a UPD app (at the same time). It utilizes the new
 // --  UIP_DNS, UIP_DHCP and UIP_SCAN features to do some fun stuff.
@@ -30,12 +24,8 @@
 // --     the strongest RSSI.
 // --  3. If suitable OPEN AP is returned connect with it
 // --  4. If connection is made use UIP_DHCP to get DHCP addr info from gateway.
-// --     I am not happy with this as I am unable to make the sketch work without
-// --     a software reset of the WiShield.  Removing the reset needs to be done 
-// --     to make DHCP viable.
-// --  5. Set the returned DHCP data into memory and reset the WiShield (not Arduino) :( 
-// --  6. Reconnect to the OPEN AP using DHCP data then use UIP_DNS to lookup the 
-// --     IP address of my server.
+// --  5. Set the returned DHCP data into the uIP stack.
+// --  6. Use UIP_DNS to lookup the IP address of my server.
 // --  7. Phone home to my server with TCP data describing the open AP.
 // --     I want to add GPS shield to enable sending lat/lon in the packet
 // --  8. Disconnect
@@ -47,8 +37,7 @@
 // --  and does its job unnoticed. I have not looked recently but I believe
 // --  Skyhook could be used to geographically locate the open APs as well.
 // --
-// -- The code is a bloody mess - but it works in a 'labratory setting'.  I
-// --  want to work out the extra reset during DHCP acquisition and then 
+// -- The code is a bloody mess - but it works in a 'labratory setting'.
 // --  I'll refactor the code.  Its still an experiment!
 // --
 // -- If you are going to play with this contact me for a user ID and you can 
@@ -67,7 +56,6 @@
 
 
 //#include <dataflash.h>
-//#include <WiServer.h>
 #include <WiShield.h>
 extern "C" {
   #include "uip.h"
@@ -82,8 +70,8 @@ extern "C" {
 #define PHASESEARCH        1
 #define PHASECONNECT       2
 #define PHASEDHCP          3
-#define PHASERECONNECT     4
-#define PHASEDNS           5
+#define PHASEDNS           4
+#define PHASEDNSWAIT       5
 #define PHASERUN           6
 #define PHASECLEANUP       7
 
@@ -235,22 +223,16 @@ void loop()
         uip_dhcp_request();
      }
   }
-  if(PHASERECONNECT == phase) {
-     Serial.println("PHASERECONNECT");
-     if(false == WiFi.init(15)) {
-        phase = PHASEINIT;
-        Serial.println("R2");
-     }
-     else {
-        cleanupCount = 0;
-        udpRetry = 0;
-        //set up the DNS resolver
-        uip_dns_conf(dns_ip);
-        uip_dns_query("slacklab.org");
-        phase = PHASEDNS;
-     }
+  if(PHASEDNS == phase) {
+     Serial.println("PHASEDNS");
+     cleanupCount = 0;
+     udpRetry = 0;
+     //set up the DNS resolver
+     uip_dns_conf(dns_ip);
+     uip_dns_query("slacklab.org");
+     phase = PHASEDNSWAIT;
   }
-  if(PHASEDNS == phase || PHASEDHCP == phase || PHASERECONNECT == phase || PHASERUN == phase || PHASECLEANUP == phase) {
+  if(PHASEDNSWAIT == phase || PHASEDNS == phase || PHASEDHCP == phase || PHASERUN == phase || PHASECLEANUP == phase) {
     
     if(PHASECLEANUP == phase && cleanupCount++ > 1000) {
       phase = PHASEINIT;
@@ -314,22 +296,21 @@ extern "C" {
 
          if(20 < udpRetry++) {
             Serial.println("DHCP TIMEOUT FALLBACK");
-            phase = PHASERECONNECT;
+            phase = PHASEDNS;
          }
       }
-      if(PHASEDNS == phase) {
+
+      if(PHASEDNSWAIT == phase) {
          Serial.println("PHASEDNS");
-         if(uip_udp_conn->rport == HTONS(53)) {
-            if(uip_poll()) {
-               uip_dns_run();
-            }
-            if(uip_newdata()) {
-               uip_dns_newdata();
-            }
+         if(uip_poll()) {
+            uip_dns_run();
          }
+         if(uip_newdata()) {
+            uip_dns_newdata();
+         }
+         
          if(20 < udpRetry++) {
             Serial.println("DNS TIMEOUT FALLBACK");
-            //phase = PHASECLEANUP;         
             uip_ipaddr(srvaddr, 71,231,196,153);
             uip_connect(&srvaddr, HTONS(7995));
             tcpRetry = 0;
@@ -421,9 +402,10 @@ extern "C" {
    void uip_dhcp_callback(const struct dhcp_state *s)
    {
       if(NULL != s) {
-         //uip_sethostaddr(s->ipaddr);
-         //uip_setdraddr(s->default_router);
-         //uip_setnetmask(s->netmask);
+         
+         uip_sethostaddr(s->ipaddr);
+         uip_setdraddr(s->default_router);
+         uip_setnetmask(s->netmask);
          
          local_ip[0] = uip_ipaddr1(s->ipaddr);
          local_ip[1] = uip_ipaddr2(s->ipaddr);
@@ -482,7 +464,7 @@ extern "C" {
          Serial.println("DHCP NULL FALLBACK");
       }
       
-      phase = PHASERECONNECT;
+      phase = PHASEDNS;
    }
 
    void uip_dns_callback(char *name, u16_t *ipaddr)
