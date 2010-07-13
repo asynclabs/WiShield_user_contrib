@@ -60,6 +60,7 @@ void uip_dhcp_init(const void *mac_addr, int mac_len);
 void uip_dhcp_request(void);
 char uip_dhcp_run();
 void uip_dhcp_callback(const struct dhcp_state *s);
+void uip_dhcp_shutdown();
 
 #endif /* __DHCP_H__ */
 

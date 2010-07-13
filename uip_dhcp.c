@@ -396,6 +396,12 @@ uip_dhcp_init(const void *mac_addr, int mac_len)
 }
 /*---------------------------------------------------------------------------*/
 void
+uip_dhcp_shutdown()
+{
+  uip_udp_remove(s.conn);
+}
+/*---------------------------------------------------------------------------*/
+void
 uip_dhcp_request(void)
 {
   u16_t ipaddr[2];

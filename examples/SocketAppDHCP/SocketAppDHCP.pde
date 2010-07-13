@@ -123,6 +123,9 @@ extern "C" {
          Serial.println("DHCP NULL FALLBACK");
       }
       
+      // Shut down DHCP
+      uip_dhcp_shutdown();
+      
       connectAndSendTCP = true;
    }
 

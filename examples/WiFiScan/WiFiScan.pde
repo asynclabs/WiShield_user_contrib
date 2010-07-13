@@ -296,6 +296,8 @@ extern "C" {
 
          if(20 < udpRetry++) {
             Serial.println("DHCP TIMEOUT FALLBACK");
+            // Shut down DHCP
+            uip_dhcp_shutdown();
             phase = PHASEDNS;
          }
       }
@@ -347,12 +349,14 @@ extern "C" {
     */
    void socket_app_appcall(void)
    {
-      //Serial.print("socket_app_appcall: ");
-
-      if(uip_closed() || uip_timedout()) {
-         Serial.println("CLEANUP");
+      if(uip_timedout()) {
+         Serial.println("TIMEDOUT");
          phase = PHASECLEANUP;
-         uip_close();
+         return;
+      }
+      if(uip_closed()) {
+         Serial.println("CLOSED");
+         phase = PHASECLEANUP;
          return;
       }
       if(uip_poll()) {
@@ -466,6 +470,9 @@ extern "C" {
       else {
          Serial.println("DHCP NULL FALLBACK");
       }
+
+      // Shut down DHCP
+      uip_dhcp_shutdown();
       
       phase = PHASEDNS;
    }
