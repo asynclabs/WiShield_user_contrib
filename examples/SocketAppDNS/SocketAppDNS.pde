@@ -100,6 +100,9 @@ extern "C" {
       else {
          Serial.println("DNS query failed");
       }
+      
+       // Shutdown DNS
+       uip_dns_shutdown();
    }
 
    // These uIP callbacks are unused for the purposes of this simple DNS example

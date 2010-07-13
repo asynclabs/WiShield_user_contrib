@@ -311,6 +311,9 @@ extern "C" {
          
          if(20 < udpRetry++) {
             Serial.println("DNS TIMEOUT FALLBACK");
+            // Shutdown DNS
+            uip_dns_shutdown();
+            // Send TCP packet
             uip_ipaddr(srvaddr, 71,231,196,153);
             uip_connect(&srvaddr, HTONS(7995));
             tcpRetry = 0;
@@ -486,6 +489,9 @@ extern "C" {
          uip_ipaddr(srvaddr, 71,231,196,153);
       }
       
+      // Shutdown DNS
+      uip_dns_shutdown();
+      // Send TCP packet
       uip_connect(&srvaddr, HTONS(7995));
       tcpRetry = 0;
       phase = PHASERUN;         

@@ -41,7 +41,6 @@ unsigned char security_passphrase_len;
 // End of wireless configuration parameters ----------------------------------------
 
 
-
 // Flag to know when the DNS query has completed
 boolean dnsCalledBack = false;
 
@@ -92,10 +91,13 @@ void setup() {
 // Time (in millis) when the data should be retrieved 
 long updateTime = 0;
 
-void loop(){
-
+void loop()
+{
   // Check if it's time to get an update
   if (true == dnsCalledBack && millis() >= updateTime) {
+    // Shutdown DNS
+    uip_dns_shutdown();
+    // Call WiServer to fetch a page
     getWeather.submit();    
     // Get another update one hour from now
     updateTime += 1000 * 60 * 60;
