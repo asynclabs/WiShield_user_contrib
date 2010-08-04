@@ -59,9 +59,11 @@
 //
 // Commonly accessed uIP stack settings 
 //
+#define UIP_WEP_KEY_LEN     13 // WEP Key length: 5 bytes (64-bit WEP); 13 bytes (128-bit WEP)
+#define UIP_WEP_KEY_DEFAULT 0  // Default WEP key ID: Key 0, 1, 2, 3
 #define MAX_TCP_CONNS       2  // Max TCP connections desired
 #define MAX_TCP_LISTENPORTS 2  // Max TCP listening ports
-#define MAX_UDP_CONNS       2  // Max UDP connections desired
+#define MAX_UDP_CONNS       1  // Max UDP connections desired
 // Don't play with UIP_CLOCK_DIV unless you know what you are doing!
 #define UIP_CLOCK_DIV       2  // Referenced in stack.c; default 2
 

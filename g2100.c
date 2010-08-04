@@ -236,23 +236,20 @@ void zg_process_isr()
 			break;
 		case ZG_INTR_ST_RD_CTRL_REG:
 		{
-			U16 rx_byte_cnt = (0x0000 | (hdr[1] << 8) | hdr[2]) & 0x0fff; // only 12bits matter (0-4095)
-			// Make sure zg_buf/uip_buf is large enough for the incoming data
-			if(rx_byte_cnt < (U16)UIP_BUFSIZE) {
-				// Incoming data fits
-				zg_buf[0] = ZG_CMD_RD_FIFO;
-				spi_transfer(zg_buf, rx_byte_cnt + 1, 1); // copy ZG2100 buffer contents into zg_buf (uip_buf)
-				hdr[0] = ZG_CMD_RD_FIFO_DONE; // Tell ZG2100 we're done reading from it's buffer
-				spi_transfer(hdr, 1, 1);
-				intr_valid = 1;
-				intr_state = 0;
-            }
-            else { 
-            	// Incoming data too large, ignore and continue
-				intr_valid = 0;
-				intr_state = 0;
-			}
+			U16 rx_byte_cnt = (0x0000 | (hdr[1] << 8) | hdr[2]) & 0x0fff;
+			zg_buf[0] = ZG_CMD_RD_FIFO;
 			
+			// Check if our buffer is large enough for packet
+         	if(rx_byte_cnt < (U16)UIP_BUFSIZE) {
+         		// copy ZG2100 buffer contents into zg_buf (uip_buf)
+         		spi_transfer(zg_buf, rx_byte_cnt + 1, 1);
+            }
+         
+         	// Tell ZG2100 we're done reading from it's buffer
+			hdr[0] = ZG_CMD_RD_FIFO_DONE;
+			spi_transfer(hdr, 1, 1);
+			intr_valid = 1;
+			intr_state = 0;
 			break;
 		}
 		}
@@ -345,9 +342,9 @@ void zg_write_wep_key(U8* cmd_buf)
 {
 	zg_wep_key_req_t* cmd = (zg_wep_key_req_t*)cmd_buf;
 
-	cmd->slot = 3;		// WEP key slot
-	cmd->keyLen = 13;	// Key length: 5 bytes (64-bit WEP); 13 bytes (128-bit WEP)
-	cmd->defID = 0;		// Default key ID: Key 0, 1, 2, 3
+	cmd->slot = 3;                    // WEP key slot
+	cmd->keyLen = UIP_WEP_KEY_LEN;    // Key length: 5 bytes (64-bit WEP); 13 bytes (128-bit WEP)
+	cmd->defID = UIP_WEP_KEY_DEFAULT; // Default key ID: Key 0, 1, 2, 3
 	cmd->ssidLen = ssid_len;
 	memset(cmd->ssid, 0x00, 32);
 	memcpy(cmd->ssid, ssid, ssid_len);
