@@ -236,19 +236,27 @@ void zg_process_isr()
 			break;
 		case ZG_INTR_ST_RD_CTRL_REG:
 		{
+      		// Get the size of the incoming packet
 			U16 rx_byte_cnt = (0x0000 | (hdr[1] << 8) | hdr[2]) & 0x0fff;
-			zg_buf[0] = ZG_CMD_RD_FIFO;
-			
+
 			// Check if our buffer is large enough for packet
-         	if(rx_byte_cnt < (U16)UIP_BUFSIZE) {
-         		// copy ZG2100 buffer contents into zg_buf (uip_buf)
-         		spi_transfer(zg_buf, rx_byte_cnt + 1, 1);
-            }
-         
-         	// Tell ZG2100 we're done reading from it's buffer
+            if(rx_byte_cnt + 1 < (U16)UIP_BUFSIZE ) {
+				zg_buf[0] = ZG_CMD_RD_FIFO;
+				// Copy ZG2100 buffer contents into zg_buf (uip_buf)             
+				spi_transfer(zg_buf, rx_byte_cnt + 1, 1);
+				// interrupt from zg2100 was meaningful and requires further processing
+				intr_valid = 1;
+			}
+			else {
+				// Too Big, ignore it and continue
+				intr_valid = 0; 
+			}
+
+			// Tell ZG2100 we're done reading from its buffer
 			hdr[0] = ZG_CMD_RD_FIFO_DONE;
 			spi_transfer(hdr, 1, 1);
-			intr_valid = 1;
+            
+			// Done reading interrupt from ZG2100
 			intr_state = 0;
 			break;
 		}
