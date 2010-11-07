@@ -68,6 +68,8 @@ extern const prog_char status[];
 extern const prog_char base64Chars[];
 
 
+/* GregEigsti - jrwifi submitted WiServer stability fix */
+static char get_string_global[WISERVER_GET_STRING_MAX];
 
 /* Application's callback function for serving pages */
 pageServingFunction callbackFunc;
@@ -276,14 +278,25 @@ boolean processLine(char* data, int len) {
 		data = start;
 		char* end = data + len;
 		while (++data < end) {
-			if (*data == ' ') {
+			if (' ' == *data) {
 				// Replace the space with a NULL to terminate it
-				*(data++) = 0;
+				*(data++) = '\0';
+			
+				// GregEigsti - jrwifi submitted WiServer stability fix
 				// Compute length of the URL including the NULL
-				int len = data - start;
+				len = len >= WISERVER_GET_STRING_MAX ? WISERVER_GET_STRING_MAX - 1 : data - start;
 				// Allocate space for the URL and copy the contents
-				uip_conn->appstate.request = malloc(len);
+				uip_conn->appstate.request = get_string_global;
 				memcpy(uip_conn->appstate.request, start, len);
+				get_string_global[len] = '\0';
+
+				// GregEigsti - original WiServer code
+				// Compute length of the URL including the NULL
+				// int len = data - start;
+				// Allocate space for the URL and copy the contents
+				// uip_conn->appstate.request = malloc(len);
+				// memcpy(uip_conn->appstate.request, start, len);
+
 				return false;
 			}
 		}
@@ -412,7 +425,6 @@ void server_task_impl() {
 		}
 	}
 
-
 	// Did we get an ack for the last packet?
 	if (uip_acked()) {
 		// Record the bytes that were successfully sent
@@ -445,7 +457,8 @@ void server_task_impl() {
 			}
 
 			// Free RAM and clear the pointer
-			free(app->request);
+			// GregEigsti - jrwifi submitted WiServer stability fix
+			// free(app->request);
 			app->request = NULL;
 		}
 	}
