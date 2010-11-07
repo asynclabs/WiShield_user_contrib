@@ -1154,9 +1154,13 @@ uip_process(u8_t flag)
   goto drop;
 
  udp_found:
-  if (uip_udp_conn->rport == 0) {
-    uip_udp_conn->rport = UDPBUF->srcport;
-  }
+  // rryan UDP locked to port fix
+  //  matches fix found in updated version of original uIP stack - though I wonder if a better
+  //  fix would be changing the condition above on lines 1145 and 1146?  Regardless UDP is connectionless
+  //  so this should help at the expense of losing the rport data for the packet (not important IMO).
+  // if (uip_udp_conn->rport == 0) {
+  //   uip_udp_conn->rport = UDPBUF->srcport;
+  // }
   uip_conn = NULL;
   uip_flags = UIP_NEWDATA;
   uip_sappdata = uip_appdata = &uip_buf[UIP_LLH_LEN + UIP_IPUDPH_LEN];
