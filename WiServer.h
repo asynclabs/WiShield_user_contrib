@@ -180,13 +180,6 @@ class Server: public Print
 		 */
 		void init(pageServingFunction function);
 
-	    /*
-		 * Enables or disables verbose mode.  If verbose mode is true, then WiServer
-		 * will output log info via the Serial class.  Verbose mode is disabled by
-		 * default, but is automatically enabled if DEBUG is defined
-		 */
-		void enableVerboseMode(boolean enable);
-
 		/**
 		 * The server task method (must be called in the main loop to run the WiServer)
 		 */
