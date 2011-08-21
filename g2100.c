@@ -55,6 +55,7 @@ static U16 zg_buf_len;
 static U16 lastRssi;
 static U8 scan_cnt;
 static U8 wpa_psk_key[ZG_MAX_PMK_LEN];
+static U8 ssid_len;
 
 void zg_init()
 {
