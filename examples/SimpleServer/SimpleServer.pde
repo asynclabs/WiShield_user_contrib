@@ -3,6 +3,8 @@
  */
 
 
+#define DEBUG
+#define DEBUG_VERBOSE
 #include <WiServer.h>
 
 // Wireless configuration parameters ----------------------------------------
@@ -64,9 +66,7 @@ void setup() {
   // Initialize WiServer and have it use the sendMyPage function to serve pages
   WiServer.init(sendMyPage);
   
-  // Enable Serial output and ask WiServer to generate log messages (optional)
   Serial.begin(57600);
-  WiServer.enableVerboseMode(true);
 }
 
 void loop(){

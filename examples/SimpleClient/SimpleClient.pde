@@ -3,6 +3,8 @@
  * it via the Serial API
  */
 
+#define DEBUG
+#define DEBUG_VERBOSE
 #include <WiServer.h>
 
 // Wireless configuration parameters ----------------------------------------
@@ -65,9 +67,7 @@ void setup() {
     // Initialize WiServer (we'll pass NULL for the page serving function since we don't need to serve web pages) 
   WiServer.init(NULL);
   
-  // Enable Serial output and ask WiServer to generate log messages (optional)
   Serial.begin(57600);
-  WiServer.enableVerboseMode(true);
 
   // Have the processData function called when data is returned by the server
   getWeather.setReturnFunc(printData);
