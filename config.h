@@ -44,7 +44,6 @@ extern U8 subnet_mask[];
 extern char ssid[];
 extern U8 ssid_len;
 extern const prog_char security_passphrase[];
-extern U8 security_passphrase_len;
 extern U8 security_type;
 extern U8 wireless_mode;
 
