@@ -410,7 +410,7 @@ static void zg_write_psk_key(U8* cmd_buf)
 	cmd->slot = 0;	// WPA/WPA2 PSK slot
 	cmd->ssidLen = ssid_len;
 	memset(cmd->ssid, 0x00, 32);
-	memcpy(cmd->ssid, ssid, cmd->ssidLen);
+	memcpy(cmd->ssid, ssid, ssid_len);
 	memcpy(cmd->keyData, wpa_psk_key, ZG_MAX_PMK_LEN);
 
 	return;
