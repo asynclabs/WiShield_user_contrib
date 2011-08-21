@@ -24,7 +24,6 @@ char ssid[]                  = {"ASYNCLABS"};   // max 32 bytes
 unsigned char security_type  = 0;               // 0 - open; 1 - WEP; 2 - WPA; 3 - WPA2
 unsigned char  wireless_mode = 1;               // 1==Infrastructure, 2==Ad-hoc
 unsigned char ssid_len;
-unsigned char security_passphrase_len;
 
 // WPA/WPA2 passphrase
 const prog_char security_passphrase[] PROGMEM = {"12345678"};	// max 64 characters
