@@ -377,7 +377,7 @@ void zg_write_wep_key(U8* cmd_buf)
 
 	cmd->slot = 3;                    // WEP key slot
 	cmd->keyLen = UIP_WEP_KEY_LEN;    // Key length: 5 bytes (64-bit WEP); 13 bytes (128-bit WEP)
-	cmd->defID = UIP_WEP_KEY_DEFAULT; // Default key ID: Key 0, 1, 2, 3
+	cmd->defID = 0;
 	cmd->ssidLen = ssid_len;
 	strncpy(cmd->ssid, ssid, ZG_MAX_SSID_LENGTH);
 	memcpy_P(cmd->key, wep_keys, ZG_MAX_ENCRYPTION_KEYS * ZG_MAX_ENCRYPTION_KEY_SIZE);
