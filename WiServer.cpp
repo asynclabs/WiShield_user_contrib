@@ -54,6 +54,7 @@ extern "C" {
 #define LF 10
 
 // Strings stored in program memory (defined in strings.c)
+extern const prog_char httpGET[];
 extern const prog_char httpOK[];
 extern const prog_char httpNotFound[];
 extern const prog_char http10[];
@@ -271,7 +272,7 @@ void send() {
 boolean processLine(char* data, int len) {
 
 	// Check for a valid GET line
-	if ((uip_conn->appstate.request == NULL) && (strncmp(data, "GET /", 4) == 0)) {
+	if ((uip_conn->appstate.request == NULL) && (strncmp_P(data, httpGET, 4) == 0)) {
 		// URL starts at the '/'
 		char* start = data + 4;
 		// Find trailing space after the URL
