@@ -380,7 +380,8 @@ void zg_write_wep_key(U8* cmd_buf)
 	cmd->defID = 0;
 	cmd->ssidLen = ssid_len;
 	strncpy(cmd->ssid, ssid, ZG_MAX_SSID_LENGTH);
-	memcpy_P(cmd->key, wep_keys, ZG_MAX_ENCRYPTION_KEYS * ZG_MAX_ENCRYPTION_KEY_SIZE);
+	// we only should copy 1 x ZG_MAX_ENCRYPTION_KEY_SIZE but it shouldn't hurt to copy more
+	memcpy_P(cmd->key, security_data, ZG_MAX_ENCRYPTION_KEYS * ZG_MAX_ENCRYPTION_KEY_SIZE);
 
 	return;
 }
@@ -390,11 +391,11 @@ static void zg_calc_psk_key(U8* cmd_buf)
 	zg_psk_calc_req_t* cmd = (zg_psk_calc_req_t*)cmd_buf;
 
 	cmd->configBits = 0;
-	cmd->phraseLen = (U8)strlen_P(security_passphrase);
+	cmd->phraseLen = (U8)strlen_P(security_data);
 	cmd->ssidLen = ssid_len;
 	cmd->reserved = 0;
 	strncpy(cmd->ssid, ssid, ZG_MAX_SSID_LENGTH);
-	strncpy_P(cmd->passPhrase, security_passphrase, ZG_MAX_WPA_PASSPHRASE_LEN);
+	strncpy_P(cmd->passPhrase, security_data, ZG_MAX_WPA_PASSPHRASE_LEN);
 
 	return;
 }
