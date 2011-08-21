@@ -629,6 +629,10 @@ void zg_drv_process()
 
 			zg_drv_state = DRV_STATE_IDLE;
 			break;
+		case ZG_SECURITY_TYPE_WPA_PRECALC:
+		case ZG_SECURITY_TYPE_WPA2_PRECALC:
+			memcpy_P(wpa_psk_key, security_data, ZG_MAX_PMK_LEN);
+			zg_drv_state = DRV_STATE_INSTALL_PSK;
 		default:
 			break;
 		}
@@ -677,7 +681,11 @@ void zg_drv_process()
 		zg_buf[1] = ZG_MAC_TYPE_MGMT_REQ;
 		zg_buf[2] = ZG_MAC_SUBTYPE_MGMT_REQ_CONNECT;
 
-		cmd->secType = security_type;
+		// adjust security_type to mask the PRECALC types
+		if (security_type < ZG_SECURITY_TYPE_WPA_PRECALC)
+			cmd->secType = security_type;
+		else
+			cmd->secType = security_type - 2;
 
 		cmd->ssidLen = ssid_len;
 		strncpy(cmd->ssid, ssid, ZG_MAX_SSID_LENGTH);

@@ -218,6 +218,8 @@ enum {
 #define ZG_SECURITY_TYPE_WEP	1
 #define ZG_SECURITY_TYPE_WPA	2
 #define ZG_SECURITY_TYPE_WPA2	3
+#define ZG_SECURITY_TYPE_WPA_PRECALC   4
+#define ZG_SECURITY_TYPE_WPA2_PRECALC  5
 
 typedef struct
 {
