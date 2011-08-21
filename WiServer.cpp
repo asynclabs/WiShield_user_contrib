@@ -273,20 +273,13 @@ boolean processLine(char* data, int len) {
 				// Replace the space with a NULL to terminate it
 				*(data++) = '\0';
 			
-				// GregEigsti - jrwifi submitted WiServer stability fix
-				// Compute length of the URL including the NULL
-				len = len >= WISERVER_GET_STRING_MAX ? WISERVER_GET_STRING_MAX - 1 : data - start;
-				// Allocate space for the URL and copy the contents
+				// copy the URL to the static storage
 				uip_conn->appstate.request = get_string_global;
-				memcpy(uip_conn->appstate.request, start, len);
-				get_string_global[len] = '\0';
-
-				// GregEigsti - original WiServer code
-				// Compute length of the URL including the NULL
-				// int len = data - start;
-				// Allocate space for the URL and copy the contents
-				// uip_conn->appstate.request = malloc(len);
-				// memcpy(uip_conn->appstate.request, start, len);
+				strncpy(get_string_global, start, WISERVER_GET_STRING_MAX - 1);
+				// The following set is implicit. get_string_global is allocated in 
+				// the BSS so it starts with a NULL last char and it stays there
+				// as long as we never overwrite it
+				// get_string_global[WISERVER_GET_STRING_MAX - 1] = '\0';
 
 				return false;
 			}
