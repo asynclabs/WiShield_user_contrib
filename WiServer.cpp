@@ -31,11 +31,13 @@
 								    multi-pass transmission, local client
 								    checks, activity LED support, etc.
 
+   Joe Touch		12/14/2011		Ported to arduino-1.0 compiler
+
 
  *****************************************************************************/
 
 
-#include "WProgram.h"
+#include "Arduino.h"
 #include "WiServer.h"
 
 extern "C" {
@@ -154,55 +156,64 @@ void setRXPin(byte value) {
 /******* Generic printing and sending functions ********/
 
 
-void Server::write_P(const char data[], int len) {
+size_t Server::write_P(const char data[], int len) {
 	while (len-- > 0) {
 		this->write(pgm_read_byte(data++));
 	}
+	return len;
 }
 
 
-void Server::print_P(const char s[]) {
+size_t Server::print_P(const char s[]) {
 	char c = pgm_read_byte(s);
+	size_t count = 0;
 	while (c) {
 		this->print(c);
 		c = pgm_read_byte(++s);
+		count++;
 	}
+	return count;
 }
 
 
-void Server::println_P(const char c[]) {
-	this->print_P(c);
-	this->println();
+size_t Server::println_P(const char c[]) {
+	size_t count = 0;
+	count += this->print_P(c);
+	count += this->println();
+	return count;
 }
 
 
 
-void Server::printTime(long t) {
+size_t Server::printTime(long t) {
+	size_t count = 0;
 
 	long secs = t / 1000;
 	int mins = (int)(secs / 60);
 	int hours = mins / 60;
 
 	hours %= 24;
-	this->print(hours / 10);
-	this->print(hours % 10);
-	this->print(':');
+	count += this->print(hours / 10);
+	count += this->print(hours % 10);
+	count += this->print(':');
 
 	mins %= 60;
-	this->print(mins / 10);
-	this->print(mins % 10);
-	this->print(':');
+	count += this->print(mins / 10);
+	count += this->print(mins % 10);
+	count += this->print(':');
 
 	secs %= 60;
-	this->print(secs / 10);
-	this->print(secs % 10);
+	count += this->print(secs / 10);
+	count += this->print(secs % 10);
+
+	return count;
 }
 
 
 /*
  * Writes a byte to the virtual buffer for the current connection
  */
-void Server::write(uint8_t b) {
+size_t Server::write(uint8_t b) {
 
 	// Make sure there's a current connection
 	if (uip_conn) {
@@ -212,8 +223,10 @@ void Server::write(uint8_t b) {
 		if ((offset >= 0) && (offset < (int)uip_conn->mss)) {
 			// Write the byte to the corresponding location in the buffer
 			*((char*)uip_appdata + offset) = b;
+			return 1;
 		}
 	}
+	return 0;
 }
 
 

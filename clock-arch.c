@@ -30,6 +30,9 @@
   ---------------------------------------------------------------
    AsyncLabs			05/29/2009	Initial port
 
+   Joe Touch		12/14/2011	ported to arduino-1.0 compiler
+
+
  *****************************************************************************/
 
 #include "global-conf.h"
@@ -41,7 +44,7 @@
 #include <avr/sfr_defs.h>
 
 #include "clock-arch.h"
-#include "wiring.h"
+#include "Arduino.h"
 
 #if 0
 //Counted time
