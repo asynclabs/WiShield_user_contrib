@@ -43,7 +43,7 @@ extern "C" {
   void stack_process(void);
 }
 
-#include "WProgram.h"
+#include "arduino.h"
 #include "WiShield.h"
 
 boolean WiShield::init(U8 seconds)
