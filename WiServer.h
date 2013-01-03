@@ -195,7 +195,7 @@ class Server: public Print
 		/**
 		 * Writes a single byte to the current connection buffer
 		 */
-		virtual void write(uint8_t);
+		virtual size_t write(uint8_t);
 
 		/**
 		 * Prints a string that is stored in program memory
