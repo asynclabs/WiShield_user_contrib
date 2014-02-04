@@ -54,7 +54,8 @@ static U8* zg_buf;
 static U16 zg_buf_len;
 static U16 lastRssi;
 static U8 scan_cnt;
-static U8 wpa_psk_key[32];
+static U8 wpa_psk_key[ZG_MAX_PMK_LEN];
+static U8 ssid_len;
 
 void zg_init()
 {
@@ -81,7 +82,6 @@ void zg_init()
 	zg_interrupt_reg(0x80|0x40, 1);
 
 	ssid_len = (U8)strlen(ssid);
-	security_passphrase_len = (U8)strlen_P(security_passphrase);
 }
 
 void spi_transfer(volatile U8* buf, U16 len, U8 toggle_cs)
@@ -378,11 +378,11 @@ void zg_write_wep_key(U8* cmd_buf)
 
 	cmd->slot = 3;                    // WEP key slot
 	cmd->keyLen = UIP_WEP_KEY_LEN;    // Key length: 5 bytes (64-bit WEP); 13 bytes (128-bit WEP)
-	cmd->defID = UIP_WEP_KEY_DEFAULT; // Default key ID: Key 0, 1, 2, 3
+	cmd->defID = 0;
 	cmd->ssidLen = ssid_len;
-	memset(cmd->ssid, 0x00, 32);
-	memcpy(cmd->ssid, ssid, ssid_len);
-	memcpy_P(cmd->key, wep_keys, ZG_MAX_ENCRYPTION_KEYS * ZG_MAX_ENCRYPTION_KEY_SIZE);
+	strncpy(cmd->ssid, ssid, ZG_MAX_SSID_LENGTH);
+	// we only should copy 1 x ZG_MAX_ENCRYPTION_KEY_SIZE but it shouldn't hurt to copy more
+	memcpy_P(cmd->key, security_data, ZG_MAX_ENCRYPTION_KEYS * ZG_MAX_ENCRYPTION_KEY_SIZE);
 
 	return;
 }
@@ -392,13 +392,11 @@ static void zg_calc_psk_key(U8* cmd_buf)
 	zg_psk_calc_req_t* cmd = (zg_psk_calc_req_t*)cmd_buf;
 
 	cmd->configBits = 0;
-	cmd->phraseLen = security_passphrase_len;
+	cmd->phraseLen = (U8)strlen_P(security_data);
 	cmd->ssidLen = ssid_len;
 	cmd->reserved = 0;
-	memset(cmd->ssid, 0x00, 32);
-	memcpy(cmd->ssid, ssid, ssid_len);
-	memset(cmd->passPhrase, 0x00, 64);
-	memcpy_P(cmd->passPhrase, security_passphrase, security_passphrase_len);
+	strncpy(cmd->ssid, ssid, ZG_MAX_SSID_LENGTH);
+	strncpy_P(cmd->passPhrase, security_data, ZG_MAX_WPA_PASSPHRASE_LEN);
 
 	return;
 }
@@ -409,8 +407,7 @@ static void zg_write_psk_key(U8* cmd_buf)
 
 	cmd->slot = 0;	// WPA/WPA2 PSK slot
 	cmd->ssidLen = ssid_len;
-	memset(cmd->ssid, 0x00, 32);
-	memcpy(cmd->ssid, ssid, cmd->ssidLen);
+	strncpy(cmd->ssid, ssid, ZG_MAX_SSID_LENGTH);
 	memcpy(cmd->keyData, wpa_psk_key, ZG_MAX_PMK_LEN);
 
 	return;
@@ -531,7 +528,7 @@ void zg_drv_process()
 					zg_drv_state = DRV_STATE_ENABLE_CONN_MANAGE;
 					break;
 				case ZG_MAC_SUBTYPE_MGMT_REQ_CALC_PSK:
-					memcpy(wpa_psk_key, ((zg_psk_calc_cnf_t*)&zg_buf[3])->psk, 32);
+					memcpy(wpa_psk_key, ((zg_psk_calc_cnf_t*)&zg_buf[3])->psk, ZG_MAX_PMK_LEN);
 					zg_drv_state = DRV_STATE_INSTALL_PSK;
 					break;
 				case ZG_MAC_SUBTYPE_MGMT_REQ_PMK_KEY:
@@ -633,6 +630,10 @@ void zg_drv_process()
 
 			zg_drv_state = DRV_STATE_IDLE;
 			break;
+		case ZG_SECURITY_TYPE_WPA_PRECALC:
+		case ZG_SECURITY_TYPE_WPA2_PRECALC:
+			memcpy_P(wpa_psk_key, security_data, ZG_MAX_PMK_LEN);
+			zg_drv_state = DRV_STATE_INSTALL_PSK;
 		default:
 			break;
 		}
@@ -681,11 +682,14 @@ void zg_drv_process()
 		zg_buf[1] = ZG_MAC_TYPE_MGMT_REQ;
 		zg_buf[2] = ZG_MAC_SUBTYPE_MGMT_REQ_CONNECT;
 
-		cmd->secType = security_type;
+		// adjust security_type to mask the PRECALC types
+		if (security_type < ZG_SECURITY_TYPE_WPA_PRECALC)
+			cmd->secType = security_type;
+		else
+			cmd->secType = security_type - 2;
 
 		cmd->ssidLen = ssid_len;
-		memset(cmd->ssid, 0, 32);
-		memcpy(cmd->ssid, ssid, ssid_len);
+		strncpy(cmd->ssid, ssid, ZG_MAX_SSID_LENGTH);
 
 		// units of 100 milliseconds
 		cmd->sleepDuration = 0;

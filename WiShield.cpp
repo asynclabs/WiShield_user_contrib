@@ -30,6 +30,7 @@
   ---------------------------------------------------------------
    AsyncLabs			05/01/2009	Initial version
    AsyncLabs			05/29/2009	Adding support for new library
+   Joe Touch		12/14/2011	Ported to arduino-1.0 compiler
 
  *****************************************************************************/
 
@@ -43,7 +44,7 @@ extern "C" {
   void stack_process(void);
 }
 
-#include "WProgram.h"
+#include "Arduino.h"
 #include "WiShield.h"
 
 boolean WiShield::init(U8 seconds)

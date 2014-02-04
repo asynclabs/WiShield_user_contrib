@@ -32,7 +32,6 @@ prog_uchar wep_keys[] PROGMEM = {
 #define WIRELESS_MODE_ADHOC	2
 unsigned char wireless_mode = WIRELESS_MODE_INFRA;
 unsigned char ssid_len;
-unsigned char security_passphrase_len;
 // End of wireless configuration parameters ----------------------------------------
 
 // Dataflash configuration parameters ----------------------------------------

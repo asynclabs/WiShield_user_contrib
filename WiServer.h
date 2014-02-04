@@ -33,6 +33,8 @@
 
    Mark A. Patel		06/22/2009	Revised client API
 
+   Joe Touch		12/14/2011	port to arduino-1.0 compiler
+
 
  *****************************************************************************/
 
@@ -180,13 +182,6 @@ class Server: public Print
 		 */
 		void init(pageServingFunction function);
 
-	    /*
-		 * Enables or disables verbose mode.  If verbose mode is true, then WiServer
-		 * will output log info via the Serial class.  Verbose mode is disabled by
-		 * default, but is automatically enabled if DEBUG is defined
-		 */
-		void enableVerboseMode(boolean enable);
-
 		/**
 		 * The server task method (must be called in the main loop to run the WiServer)
 		 */
@@ -195,28 +190,28 @@ class Server: public Print
 		/**
 		 * Writes a single byte to the current connection buffer
 		 */
-		virtual void write(uint8_t);
+		virtual size_t write(uint8_t);
 
 		/**
 		 * Prints a string that is stored in program memory
 		 */
-		void print_P(const char[]);
+		size_t print_P(const char[]);
 
 		/**
 		 * Prints a string that is stored in program memory followed by a line feed
 		 */
-		void println_P(const char[]);
+		size_t println_P(const char[]);
 
 		/**
 		 * Writes data of a specified length that is stored in program memory
 		 */
-		void write_P(const char[], int len);
+		size_t write_P(const char[], int len);
 
 		/**
 		 * Prints a time value in the form HH:MM:SS.  The time value is in milliseconds.
 		 *
 		 */
-		void printTime(long t);
+		size_t printTime(long t);
 
 		/**
 		 * Indicates if a page is currently being sent, and that a subsequent call to the page

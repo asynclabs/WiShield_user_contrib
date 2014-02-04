@@ -31,11 +31,13 @@
 								    multi-pass transmission, local client
 								    checks, activity LED support, etc.
 
+   Joe Touch		12/14/2011		Ported to arduino-1.0 compiler
+
 
  *****************************************************************************/
 
 
-#include "WProgram.h"
+#include "Arduino.h"
 #include "WiServer.h"
 
 extern "C" {
@@ -54,6 +56,7 @@ extern "C" {
 #define LF 10
 
 // Strings stored in program memory (defined in strings.c)
+extern const prog_char httpGET[];
 extern const prog_char httpOK[];
 extern const prog_char httpNotFound[];
 extern const prog_char http10[];
@@ -79,10 +82,6 @@ char txPin = -1;
 
 /* Digital output pin to indicate RX activity */
 char rxPin = -1;
-
-/* Enables basic log messages via Serial */
-boolean verbose = false;
-
 
 void Server::init(pageServingFunction function) {
 
@@ -116,10 +115,9 @@ void Server::init(pageServingFunction function) {
 		uip_listen(HTONS(80));
 	}
 
-#ifdef DEBUG
-	verbose = true;
+#ifdef DEBUG_VERBOSE
 	Serial.println("WiServer init called");
-#endif // DEBUG
+#endif // DEBUG_VERBOSE
 }
 
 #ifdef USE_DIG8_INTR
@@ -154,64 +152,68 @@ void setRXPin(byte value) {
 }
 
 
-void Server::enableVerboseMode(boolean enable) {
-    verbose = enable;
-}
-
-
 
 /******* Generic printing and sending functions ********/
 
 
-void Server::write_P(const char data[], int len) {
+size_t Server::write_P(const char data[], int len) {
 	while (len-- > 0) {
 		this->write(pgm_read_byte(data++));
 	}
+	return len;
 }
 
 
-void Server::print_P(const char s[]) {
+size_t Server::print_P(const char s[]) {
 	char c = pgm_read_byte(s);
+	size_t count = 0;
 	while (c) {
 		this->print(c);
 		c = pgm_read_byte(++s);
+		count++;
 	}
+	return count;
 }
 
 
-void Server::println_P(const char c[]) {
-	this->print_P(c);
-	this->println();
+size_t Server::println_P(const char c[]) {
+	size_t count = 0;
+	count += this->print_P(c);
+	count += this->println();
+	return count;
 }
 
 
 
-void Server::printTime(long t) {
+size_t Server::printTime(long t) {
+	size_t count = 0;
 
 	long secs = t / 1000;
 	int mins = (int)(secs / 60);
 	int hours = mins / 60;
 
 	hours %= 24;
-	this->print(hours / 10);
-	this->print(hours % 10);
-	this->print(':');
+	count += this->print(hours / 10);
+	count += this->print(hours % 10);
+	count += this->print(':');
 
 	mins %= 60;
-	this->print(mins / 10);
-	this->print(mins % 10);
-	this->print(':');
+	count += this->print(mins / 10);
+	count += this->print(mins % 10);
+	count += this->print(':');
 
 	secs %= 60;
-	this->print(secs / 10);
-	this->print(secs % 10);
+	count += this->print(secs / 10);
+	count += this->print(secs % 10);
+
+	return count;
 }
 
 
 /*
  * Writes a byte to the virtual buffer for the current connection
  */
-void Server::write(uint8_t b) {
+size_t Server::write(uint8_t b) {
 
 	// Make sure there's a current connection
 	if (uip_conn) {
@@ -221,8 +223,10 @@ void Server::write(uint8_t b) {
 		if ((offset >= 0) && (offset < (int)uip_conn->mss)) {
 			// Write the byte to the corresponding location in the buffer
 			*((char*)uip_appdata + offset) = b;
+			return 1;
 		}
 	}
+	return 0;
 }
 
 
@@ -238,19 +242,19 @@ void send() {
 	len = len < 0 ? 0 : len;
 	len = len > (int)uip_conn->mss ? (int)uip_conn->mss : len;
 
-	if (verbose) {
-		Serial.print("TX ");
-		Serial.print(len);
-		Serial.println(" bytes");
-	}
-
 #ifdef DEBUG
+	Serial.print("TX ");
+	Serial.print(len);
+	Serial.println(" bytes");
+#endif // DEBUG
+
+#ifdef DEBUG_VERBOSE
 	Serial.print(app->ackedCount);
 	Serial.print(" - ");
 	Serial.print(app->ackedCount + len - 1);
 	Serial.print(" of ");
 	Serial.println((int)app->cursor);
-#endif // DEBUG
+#endif // DEBUG_VERBOSE
 
 	// Send the real bytes from the virtual buffer and record how many were sent
 	uip_send(uip_appdata, len);
@@ -271,7 +275,7 @@ void send() {
 boolean processLine(char* data, int len) {
 
 	// Check for a valid GET line
-	if ((uip_conn->appstate.request == NULL) && (strncmp(data, "GET /", 4) == 0)) {
+	if ((uip_conn->appstate.request == NULL) && (strncmp_P(data, httpGET, 4) == 0)) {
 		// URL starts at the '/'
 		char* start = data + 4;
 		// Find trailing space after the URL
@@ -282,20 +286,13 @@ boolean processLine(char* data, int len) {
 				// Replace the space with a NULL to terminate it
 				*(data++) = '\0';
 			
-				// GregEigsti - jrwifi submitted WiServer stability fix
-				// Compute length of the URL including the NULL
-				len = len >= WISERVER_GET_STRING_MAX ? WISERVER_GET_STRING_MAX - 1 : data - start;
-				// Allocate space for the URL and copy the contents
+				// copy the URL to the static storage
 				uip_conn->appstate.request = get_string_global;
-				memcpy(uip_conn->appstate.request, start, len);
-				get_string_global[len] = '\0';
-
-				// GregEigsti - original WiServer code
-				// Compute length of the URL including the NULL
-				// int len = data - start;
-				// Allocate space for the URL and copy the contents
-				// uip_conn->appstate.request = malloc(len);
-				// memcpy(uip_conn->appstate.request, start, len);
+				strncpy(get_string_global, start, WISERVER_GET_STRING_MAX - 1);
+				// The following set is implicit. get_string_global is allocated in 
+				// the BSS so it starts with a NULL last char and it stays there
+				// as long as we never overwrite it
+				// get_string_global[WISERVER_GET_STRING_MAX - 1] = '\0';
 
 				return false;
 			}
@@ -365,9 +362,9 @@ void sendPage() {
 		uip_conn->appstate.cursor = 0;
 		WiServer.println_P(httpNotFound);
 		WiServer.println();
-#ifdef DEBUG
+#ifdef DEBUG_VERBOSE
  		Serial.println("URL Not Found");
-#endif // DEBUG
+#endif // DEBUG_VERBOSE
 	}
 	// Send the 'real' bytes in the buffer
 	send();
@@ -404,9 +401,9 @@ void server_task_impl() {
 
 	if (uip_connected()) {
 
-		if (verbose) {
-			Serial.println("Server connected");
-		}
+#ifdef DEBUG
+		Serial.println("Server connected");
+#endif // DEBUG
 
 		// Initialize the server request data
 		app->ackedCount = 0;
@@ -417,10 +414,10 @@ void server_task_impl() {
  		setRXPin(HIGH);
 		// Process the received packet and check if a valid GET request had been received
 		if (processPacket((char*)uip_appdata, uip_datalen()) && app->request) {
-			if (verbose) {
-				Serial.print("Processing request for ");
-				Serial.println((char*)app->request);
-			}
+#ifdef DEBUG
+			Serial.print("Processing request for ");
+			Serial.println((char*)app->request);
+#endif // DEBUG
 			sendPage();
 		}
 	}
@@ -452,10 +449,9 @@ void server_task_impl() {
 
 		// Check if a URL was stored for this connection
 		if (app->request != NULL) {
-			if (verbose) {
-				Serial.println("Server connection closed");
-			}
-
+#ifdef DEBUG
+			Serial.println("Server connection closed");
+#endif // DEBUG
 			// Free RAM and clear the pointer
 			// GregEigsti - jrwifi submitted WiServer stability fix
 			// free(app->request);
@@ -584,10 +580,10 @@ void client_task_impl() {
 
 	if (uip_connected()) {
 
-		if (verbose) {
-			Serial.print("Connected to ");
-			Serial.println(req->hostName);
-		}
+#ifdef DEBUG
+		Serial.print("Connected to ");
+		Serial.println(req->hostName);
+#endif // DEBUG
 		app->ackedCount = 0;
 		sendRequest();
 	}
@@ -613,13 +609,12 @@ void client_task_impl() {
  	if (uip_newdata())  {
  		setRXPin(HIGH);
 
-		if (verbose) {
-			Serial.print("RX ");
-			Serial.print(uip_datalen());
-			Serial.print(" bytes from ");
-			Serial.println(req->hostName);
-		}
-
+#ifdef DEBUG
+		Serial.print("RX ");
+		Serial.print(uip_datalen());
+		Serial.print(" bytes from ");
+		Serial.println(req->hostName);
+#endif // DEBUG
 		// Check if the sketch cares about the returned data
 	 	if ((req->returnFunc) && (uip_datalen() > 0)){
 			// Call the sketch's callback function
@@ -629,11 +624,10 @@ void client_task_impl() {
 
 	if (uip_aborted() || uip_timedout() || uip_closed()) {
 		if (req != NULL) {
-			if (verbose) {
-				Serial.print("Ended connection with ");
-				Serial.println(req->hostName);
-			}
-
+#ifdef DEBUG
+			Serial.print("Ended connection with ");
+			Serial.println(req->hostName);
+#endif // DEBUG
 			if (req->returnFunc) {
 				// Call the sketch's callback function with 0 bytes to indicate End Of Data
 				req->returnFunc((char*)uip_appdata, 0);
@@ -728,10 +722,10 @@ void Server::server_task() {
 		struct uip_conn *conn = uip_connect(&(queue->ipAddr), queue->port);
 
 		if (conn != NULL) {
-#ifdef DEBUG
+#ifdef DEBUG_VERBOSE
 			Serial.print("Got connection for ");
 			Serial.println(queue->hostName);
-#endif // DEBUG
+#endif // DEBUG_VERBOSE
 
 			// Attach the request object to its connection
 			conn->appstate.request = queue;
