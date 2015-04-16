@@ -74,7 +74,7 @@ void GETrequest::submit() {
 	if (!this->active) WiServer.submitRequest(this);
 }
 
-boolean GETrequest::isActive() {	
+bool GETrequest::isActive() {	
 	return this->active;
 }
 

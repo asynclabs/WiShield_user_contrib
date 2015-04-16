@@ -24,3 +24,20 @@ New features:
 
 Known issues:
 None
+
+
+-------------------------------------------------------------------------------
+Pin usage on WiShield v1.0
+-------------------------------------------------------------------------------
+1.SPI
+     * Slave select (SS) : Arduino pin 10 
+     * Clock (SCK) : Arduino pin 13
+     * Master in, slave out (MISO) : Arduino pin 12
+     * Master out, slave in (MOSI) : Arduino pin 11
+2. Interrupt (Uses only one of the following, depending on jumper setting)
+     * INT0 : Arduino pin 2 
+     * DIG8 : Arduino pin 8 
+3. LED : Arduino pin 9 
+     * To regain use of this pin, remove the LED jumper cap
+4. 5V power
+5. GND 

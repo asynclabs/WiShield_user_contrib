@@ -36,43 +36,43 @@
 // They are stored in program memory to reduce RAM usage.
 
 // HTTP OK response
-const prog_char httpOK[] = {"HTTP/1.0 200 OK"};
+const char PROGMEM httpOK[] = {"HTTP/1.0 200 OK"};
 
 // HTTP Not Found response
-const prog_char httpNotFound[] = {"HTTP/1.0 404 Not Found"};
+const char PROGMEM httpNotFound[] = {"HTTP/1.0 404 Not Found"};
 
 
 #ifdef ENABLE_CLIENT_MODE
 
 // Trailing HTTP/1.0 for GET and POST requests
-const prog_char http10[] = {" HTTP/1.0"};
+const char PROGMEM http10[] = {" HTTP/1.0"};
 
 // Authorization: Basic field name
-const prog_char authBasic[] = {"Authorization: Basic "};
+const char PROGMEM authBasic[] = {"Authorization: Basic "};
 
 // Content-Length field name
-const prog_char contentLength[] = {"Content-Length:     "};
+const char PROGMEM contentLength[] = {"Content-Length:     "};
 
 // User agent field with value
-const prog_char userAgent[] = {"User-Agent: WiServer/1.1"};
+const char PROGMEM userAgent[] = {"User-Agent: WiServer/1.1"};
 
 // Content type form data
-const prog_char contentTypeForm[] = {"Content-Type: application/x-www-form-urlencoded"};
+const char PROGMEM contentTypeForm[] = {"Content-Type: application/x-www-form-urlencoded"};
 
 // POST request
-const prog_char post[] = {"POST "};
+const char PROGMEM post[] = {"POST "};
 
 // GET request
-const prog_char get[] = {"GET "};
+const char PROGMEM get[] = {"GET "};
 
 // Host, User-Agent, and Content-Type lines for Twitter POSTs
-const prog_char host[] = {"Host: "};
+const char PROGMEM host[] = {"Host: "};
 
 // Status prefix for Twitter
-const prog_char status[] = {"status="};
+const char PROGMEM status[] = {"status="};
 
 /* Base64 Encoder data */
-const prog_char base64Chars[] PROGMEM = {"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"};
+const char PROGMEM base64Chars[] PROGMEM = {"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"};
 
 
 #endif // ENABLE_CLIENT_MODE
