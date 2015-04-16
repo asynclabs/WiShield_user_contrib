@@ -57,7 +57,7 @@ typedef void (*returnFunction)(char* data, int len);
 /*
  * Function for serving web pages
  */
-typedef boolean (*pageServingFunction)(char* URL);
+typedef bool (*pageServingFunction)(char* URL);
 
 /*
  * Function for providing the body of a POST request
@@ -103,7 +103,7 @@ class GETrequest
 		 * or is currently connected and communicating with the server).  If it is, any calls that attempt
 		 * to change the properties of the request will be ignored.
 		 */
-		boolean isActive();
+		bool isActive();
 
 		/*
 		 * Sets the URL for the request.  Calls to this method will be ignored if the request
@@ -124,7 +124,7 @@ class GETrequest
 	    // Return value callback function (may be NULL)
 		returnFunction returnFunc;
 	    // Indicates if the request is currently active (i.e. has a connection)
-		boolean active;
+		bool active;
 	    // Body data callback function (may be NULL)
 	    bodyFunction body;
 	    // Body preamble (may be NULL)
@@ -185,7 +185,7 @@ class Server: public Print
 		 * will output log info via the Serial class.  Verbose mode is disabled by
 		 * default, but is automatically enabled if DEBUG is defined
 		 */
-		void enableVerboseMode(boolean enable);
+		void enableVerboseMode(bool enable);
 
 		/**
 		 * The server task method (must be called in the main loop to run the WiServer)
@@ -195,7 +195,7 @@ class Server: public Print
 		/**
 		 * Writes a single byte to the current connection buffer
 		 */
-		virtual void write(uint8_t);
+		virtual size_t write(uint8_t);
 
 		/**
 		 * Prints a string that is stored in program memory
@@ -224,7 +224,7 @@ class Server: public Print
 		 * in the network.  Changes to the content of the page should only be made if this method
 		 * returns false.
 		 */
-		boolean sendInProgress();
+		bool sendInProgress();
 
 		/**
 		 * Checks if the client for the current server request resides on the same local network
@@ -239,7 +239,7 @@ class Server: public Print
 		 * Note that security checks based on the client IP address are not 100% reliable,
 		 * so this feature should not be relied upon to control access to sensitive data!
 		 */
-		boolean clientIsLocal();
+		bool clientIsLocal();
 
 		/**
 		 * Sets the pins used to indicate TX and RX activity over the network.
