@@ -35,7 +35,7 @@
  *****************************************************************************/
 
 
-#include "WProgram.h"
+#include "arduino.h"
 #include "WiServer.h"
 
 extern "C" {
@@ -54,18 +54,18 @@ extern "C" {
 #define LF 10
 
 // Strings stored in program memory (defined in strings.c)
-extern const prog_char httpOK[];
-extern const prog_char httpNotFound[];
-extern const prog_char http10[];
-extern const prog_char post[];
-extern const prog_char get[];
-extern const prog_char authBasic[];
-extern const prog_char host[];
-extern const prog_char userAgent[];
-extern const prog_char contentTypeForm[];
-extern const prog_char contentLength[];
-extern const prog_char status[];
-extern const prog_char base64Chars[];
+extern const char httpOK[];
+extern const char httpNotFound[];
+extern const char http10[];
+extern const char post[];
+extern const char get[];
+extern const char authBasic[];
+extern const char host[];
+extern const char userAgent[];
+extern const char contentTypeForm[];
+extern const char contentLength[];
+extern const char status[];
+extern const char base64Chars[];
 
 
 /* GregEigsti - jrwifi submitted WiServer stability fix */
@@ -211,7 +211,7 @@ void Server::printTime(long t) {
 /*
  * Writes a byte to the virtual buffer for the current connection
  */
-void Server::write(uint8_t b) {
+size_t Server::write(uint8_t b) {
 
 	// Make sure there's a current connection
 	if (uip_conn) {
@@ -223,6 +223,8 @@ void Server::write(uint8_t b) {
 			*((char*)uip_appdata + offset) = b;
 		}
 	}
+	
+	return 1;
 }
 
 
@@ -488,6 +490,19 @@ void Server::submitRequest(GETrequest *req) {
 	}
 	// Set the request as being active
 	req->active = true;
+	
+#ifdef DEBUG	
+	Serial.print(F("Request for "));
+	Serial.print(req->hostName);
+	Serial.print(F(" on IP "));
+	Serial.print(uip_ipaddr1(req->ipAddr));
+	Serial.print(F("."));
+	Serial.print(uip_ipaddr2(req->ipAddr));
+	Serial.print(F("."));
+	Serial.print(uip_ipaddr3(req->ipAddr));
+	Serial.print(F("."));
+	Serial.println(uip_ipaddr4(req->ipAddr));
+#endif
 }
 
 
@@ -729,8 +744,16 @@ void Server::server_task() {
 
 		if (conn != NULL) {
 #ifdef DEBUG
-			Serial.print("Got connection for ");
-			Serial.println(queue->hostName);
+			Serial.print(F("Got connection for "));
+			Serial.print(queue->hostName);
+			Serial.print(F(" on IP "));
+			Serial.print(uip_ipaddr1(queue->ipAddr));
+			Serial.print(F("."));
+			Serial.print(uip_ipaddr2(queue->ipAddr));
+			Serial.print(F("."));
+			Serial.print(uip_ipaddr3(queue->ipAddr));
+			Serial.print(F("."));
+			Serial.println(uip_ipaddr4(queue->ipAddr));
 #endif // DEBUG
 
 			// Attach the request object to its connection
