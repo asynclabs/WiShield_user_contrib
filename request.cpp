@@ -29,6 +29,7 @@
  
  *****************************************************************************/
 
+#include "arduino.h"
 #include "WiServer.h"
 
 #ifdef ENABLE_CLIENT_MODE
@@ -42,6 +43,7 @@ char twitterURL[] = {"/statuses/update.xml"};
 GETrequest::GETrequest(uint8* ipAddr, int port, char* hostName, char* URL) {
 	// Store IP address using the uIP type
 	uip_ipaddr(this->ipAddr, ipAddr[0], ipAddr[1], ipAddr[2], ipAddr[3]);
+	
 	// Store port in network order
 	this->port = htons(port);
 	// Store host name and URL
@@ -51,6 +53,8 @@ GETrequest::GETrequest(uint8* ipAddr, int port, char* hostName, char* URL) {
 	// Set remaining members to NULL
 	this->auth = NULL;
 	this->returnFunc = NULL;
+	this->timeoutFunc = NULL;
+	this->timer = 0;
 	this->active = false;
 	this->body = NULL;
 	this->bodyPreamble = NULL;
@@ -61,8 +65,47 @@ void GETrequest::setReturnFunc(returnFunction func) {
 	if (!this->active) this->returnFunc = func;
 }
 
+void GETrequest::setTimeoutFunc(timeoutFunction func) {
+	if (!this->active) this->timeoutFunc = func;
+}
+
 void GETrequest::setAuth(char* auth) {
 	if (!this->active) this->auth = auth;
+}
+
+void GETrequest::setIP(uint8* ipAddr) {
+	if (!this->active) {
+#ifdef DEBUG
+		Serial.print(F("Old IP: "));
+		Serial.print(uip_ipaddr1(this->ipAddr));
+		Serial.print(F("."));
+		Serial.print(uip_ipaddr2(this->ipAddr));
+		Serial.print(F("."));
+		Serial.print(uip_ipaddr3(this->ipAddr));
+		Serial.print(F("."));
+		Serial.println(uip_ipaddr4(this->ipAddr));
+#endif		
+		// Store IP address using the uIP type
+		uip_ipaddr(this->ipAddr, ipAddr[0], ipAddr[1], ipAddr[2], ipAddr[3]);
+		
+#ifdef DEBUG
+		Serial.print(F("New IP: "));
+		Serial.print(uip_ipaddr1(this->ipAddr));
+		Serial.print(F("."));
+		Serial.print(uip_ipaddr2(this->ipAddr));
+		Serial.print(F("."));
+		Serial.print(uip_ipaddr3(this->ipAddr));
+		Serial.print(F("."));
+		Serial.println(uip_ipaddr4(this->ipAddr));
+#endif
+	}
+}
+
+void GETrequest::setuIP(uint16* ipAddr) {
+	if (!this->active) {
+		this->ipAddr[0] = ipAddr[0];
+		this->ipAddr[1] = ipAddr[1];
+	}
 }
 
 void GETrequest::setURL(char* URL) {
@@ -74,7 +117,7 @@ void GETrequest::submit() {
 	if (!this->active) WiServer.submitRequest(this);
 }
 
-boolean GETrequest::isActive() {	
+bool GETrequest::isActive() {	
 	return this->active;
 }
 
