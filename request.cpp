@@ -53,6 +53,8 @@ GETrequest::GETrequest(uint8* ipAddr, int port, char* hostName, char* URL) {
 	// Set remaining members to NULL
 	this->auth = NULL;
 	this->returnFunc = NULL;
+	this->timeoutFunc = NULL;
+	this->timer = 0;
 	this->active = false;
 	this->body = NULL;
 	this->bodyPreamble = NULL;
@@ -61,6 +63,10 @@ GETrequest::GETrequest(uint8* ipAddr, int port, char* hostName, char* URL) {
 
 void GETrequest::setReturnFunc(returnFunction func) {
 	if (!this->active) this->returnFunc = func;
+}
+
+void GETrequest::setTimeoutFunc(timeoutFunction func) {
+	if (!this->active) this->timeoutFunc = func;
 }
 
 void GETrequest::setAuth(char* auth) {

@@ -55,6 +55,11 @@ extern "C" {
 typedef void (*returnFunction)(char* data, int len);
 
 /*
+ * Function for handling timeout
+ */
+typedef void (*timeoutFunction)();
+
+/*
  * Function for serving web pages
  */
 typedef bool (*pageServingFunction)(char* URL);
@@ -91,6 +96,11 @@ class GETrequest
 		 * Sets the function that should be called with data returned by the server.
 		 */
 		void setReturnFunc(returnFunction func);
+		
+		/*
+		 * Sets the function that should be called with timeout.
+		 */
+		void setTimeoutFunc(timeoutFunction func);
 
 		/*
 		 * Sets the authorization string for the request.  Calls to this method will be ignored if the request
@@ -133,6 +143,10 @@ class GETrequest
 	    char* auth;
 	    // Return value callback function (may be NULL)
 		returnFunction returnFunc;
+		// Timeout callback function (may be NULL)
+		timeoutFunction timeoutFunc;
+		
+		uint8_t timer;
 	    // Indicates if the request is currently active (i.e. has a connection)
 		bool active;
 	    // Body data callback function (may be NULL)
