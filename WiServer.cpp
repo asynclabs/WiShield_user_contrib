@@ -53,6 +53,8 @@ extern "C" {
 #define CR 13
 #define LF 10
 
+#define WEBCLIENT_TIMEOUT 30
+
 // Strings stored in program memory (defined in strings.c)
 extern const char httpOK[];
 extern const char httpNotFound[];
@@ -118,7 +120,7 @@ void Server::init(pageServingFunction function) {
 
 #ifdef DEBUG
 	verbose = true;
-	Serial.println("WiServer init called");
+	Serial.println(F("WiServer init called"));
 #endif // DEBUG
 }
 
@@ -241,16 +243,16 @@ void send() {
 	len = len > (int)uip_conn->mss ? (int)uip_conn->mss : len;
 
 	if (verbose) {
-		Serial.print("TX ");
+		Serial.print(F("TX "));
 		Serial.print(len);
-		Serial.println(" bytes");
+		Serial.println(F(" bytes"));
 	}
 
 #ifdef DEBUG
 	Serial.print(app->ackedCount);
-	Serial.print(" - ");
+	Serial.print(F(" - "));
 	Serial.print(app->ackedCount + len - 1);
-	Serial.print(" of ");
+	Serial.print(F(" of "));
 	Serial.println((int)app->cursor);
 #endif // DEBUG
 
@@ -368,7 +370,7 @@ void sendPage() {
 		WiServer.println_P(httpNotFound);
 		WiServer.println();
 #ifdef DEBUG
- 		Serial.println("URL Not Found");
+ 		Serial.println(F("URL Not Found"));
 #endif // DEBUG
 	}
 	// Send the 'real' bytes in the buffer
@@ -407,7 +409,7 @@ void server_task_impl() {
 	if (uip_connected()) {
 
 		if (verbose) {
-			Serial.println("Server connected");
+			Serial.println(F("Server connected"));
 		}
 
 		// Initialize the server request data
@@ -420,7 +422,7 @@ void server_task_impl() {
 		// Process the received packet and check if a valid GET request had been received
 		if (processPacket((char*)uip_appdata, uip_datalen()) && app->request) {
 			if (verbose) {
-				Serial.print("Processing request for ");
+				Serial.print(F("Processing request for "));
 				Serial.println((char*)app->request);
 			}
 			sendPage();
@@ -455,7 +457,7 @@ void server_task_impl() {
 		// Check if a URL was stored for this connection
 		if (app->request != NULL) {
 			if (verbose) {
-				Serial.println("Server connection closed");
+				Serial.println(F("Server connection closed"));
 			}
 
 			// Free RAM and clear the pointer
@@ -598,17 +600,20 @@ void client_task_impl() {
 	GETrequest *req = (GETrequest*)app->request;
 
 	if (uip_connected()) {
-
+		req->timer = 0;
 		if (verbose) {
-			Serial.print("Connected to ");
+			Serial.print(F("Connected to "));
 			Serial.println(req->hostName);
 		}
+		
 		app->ackedCount = 0;
 		sendRequest();
 	}
 
 	// Did we get an ack for the last packet?
 	if (uip_acked()) {
+		req->timer = 0;
+		
 		// Record the bytes that were successfully sent
 		app->ackedCount += app->sentCount;
 		app->sentCount = 0;
@@ -627,25 +632,42 @@ void client_task_impl() {
 
  	if (uip_newdata())  {
  		setRXPin(HIGH);
-
+		req->timer = 0;
 		if (verbose) {
-			Serial.print("RX ");
+			Serial.print(F("RX "));
 			Serial.print(uip_datalen());
-			Serial.print(" bytes from ");
+			Serial.print(F(" bytes from "));
 			Serial.println(req->hostName);
 		}
-
+		
 		// Check if the sketch cares about the returned data
 	 	if ((req->returnFunc) && (uip_datalen() > 0)){
 			// Call the sketch's callback function
 	 		req->returnFunc((char*)uip_appdata, uip_datalen());
 	 	}
  	}
-
+	
+	if (uip_rexmit() || uip_newdata() || uip_acked()) {
+		//do nothing
+	} else if(uip_poll()) {
+		req->timer++;
+		if(req->timer == WEBCLIENT_TIMEOUT) {
+			if (verbose) {
+				Serial.print(F("Connection timedout with "));
+				Serial.println(req->hostName);
+			}
+			if (req->timeoutFunc) {
+				// Call the sketch's callback timeout function
+				req->timeoutFunc();
+			}
+			uip_abort();
+		}
+	}
+	
 	if (uip_aborted() || uip_timedout() || uip_closed()) {
 		if (req != NULL) {
 			if (verbose) {
-				Serial.print("Ended connection with ");
+				Serial.print(F("Ended connection with "));
 				Serial.println(req->hostName);
 			}
 
